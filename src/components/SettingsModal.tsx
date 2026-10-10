@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { AppSettings, AvailableModel } from "../services/storage";
 import { Eye, EyeOff, X, ExternalLink, RefreshCw, AlertCircle, Check } from "lucide-react";
 import { fetchGeminiModels } from "../services/gemini";
+import { TypoLogo } from "./TypoLogo";
 
 interface SettingsModalProps {
   settings: AppSettings;
@@ -82,14 +83,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/30 backdrop-blur-2xs animate-fade-in">
       <div className="w-full max-w-md bg-[#faf9f5] border border-stone-300 rounded-xl shadow-xl p-5 text-stone-900 font-sans">
         {/* Header */}
-        <div className="flex items-baseline justify-between pb-3 mb-3 border-b border-stone-200">
-          <div>
-            <h2 className="meta-caption text-stone-900 tracking-widest text-[11px]">Preferences</h2>
-            <p className="text-[11px] text-stone-500 font-serif italic mt-0.5">Model routing and security</p>
+        <div className="flex items-center justify-between pb-3.5 mb-3.5 border-b border-stone-200">
+          <div className="flex items-center gap-3">
+            <TypoLogo size={36} className="shadow-2xs rounded-lg" />
+            <div>
+              <div className="flex items-center gap-1.5 leading-none">
+                <h2 className="font-serif text-[13px] font-bold tracking-wider uppercase text-stone-900 leading-none">
+                  Preferences
+                </h2>
+                <span className="font-mono text-[9px] text-stone-400 bg-stone-200/60 px-1 py-0.5 rounded leading-none">
+                  BYOK
+                </span>
+              </div>
+              <p className="text-[11px] text-stone-500 font-sans mt-1 leading-none">
+                Model routing & API configuration
+              </p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-stone-400 hover:text-stone-800 transition-colors cursor-pointer"
+            className="p-1.5 text-stone-400 hover:text-stone-900 hover:bg-stone-200/50 rounded-md transition-colors cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>

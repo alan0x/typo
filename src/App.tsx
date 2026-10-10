@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Header } from "./components/Header";
 import { SettingsModal } from "./components/SettingsModal";
 import { ResultCard } from "./components/ResultCard";
+import { TypoLogo } from "./components/TypoLogo";
 import { loadSettings, saveSettings, AppSettings } from "./services/storage";
 import { polishTextWithGemini, PolishResult } from "./services/gemini";
 import { listen } from "@tauri-apps/api/event";
@@ -261,18 +262,20 @@ export function App() {
           <ResultCard result={result} onReplace={handleReplace} />
         )}
 
-        {/* Quiet Empty State */}
+        {/* Quiet Empty State with Prominent Brand Mark */}
         {!loading && !result && !error && (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-8 select-none">
-            <p className="font-serif italic text-stone-700 text-sm max-w-xs leading-relaxed">
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-6 select-none animate-fade-in">
+            <div className="mb-3.5">
+              <TypoLogo size={52} className="shadow-xs rounded-2xl" />
+            </div>
+            <p className="font-serif italic text-stone-800 text-[13px] max-w-xs leading-relaxed">
               "The limits of my language mean the limits of my world."
             </p>
-            <p className="text-[11px] text-stone-600 mt-3 max-w-xs leading-normal font-sans">
-              Select text in your terminal or editor and press{" "}
-              <span className="font-mono text-stone-700 bg-stone-200/80 px-1 py-0.5 rounded text-[10px]">
+            <p className="text-[11px] text-stone-500 mt-2.5 max-w-xs leading-normal font-sans">
+              Select text anywhere and press{" "}
+              <kbd className="font-mono text-stone-700 bg-stone-200/80 border border-stone-300/80 px-1.5 py-0.5 rounded text-[10px] shadow-2xs font-medium">
                 {settings.hotkey}
-              </span>
-              .
+              </kbd>
             </p>
           </div>
         )}

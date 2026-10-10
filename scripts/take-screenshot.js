@@ -86,6 +86,17 @@ async function takeScreenshots() {
       clip: { x: 0, y: 0, width: 680, height: 600 },
     });
     console.log('Saved: assets/screenshot-preferences.png');
+
+    // 3. Capture Empty State
+    console.log('Capturing real Empty State...');
+    await page.goto('http://127.0.0.1:14888/', { waitUntil: 'networkidle0' });
+    await new Promise((r) => setTimeout(r, 600));
+
+    await page.screenshot({
+      path: 'assets/screenshot-empty.png',
+      clip: { x: 0, y: 0, width: 680, height: 500 },
+    });
+    console.log('Saved: assets/screenshot-empty.png');
   } finally {
     await browser.close();
     server.close();

@@ -1,23 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
-  <!-- Background with warm linen tone -->
-  <rect width="512" height="512" rx="112" fill="#faf9f5"/>
-  <rect width="510" height="510" x="1" y="1" rx="111" fill="none" stroke="#e7e5e4" stroke-width="2"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <rect width="100" height="100" rx="22" fill="#faf9f5" stroke="#e7e5e4" stroke-width="1.5"/>
 
   <!-- Brand Glyph: {t (Syntax & Serif Ligature) -->
-  <g transform="translate(48, 24)">
-    <!-- Code Curly Bracket { in Code Charcoal -->
-    <path d="M 170 120 C 145 120 125 135 125 165 L 125 210 C 125 235 110 245 92 250 C 110 255 125 265 125 290 L 125 335 C 125 365 145 380 170 380 L 170 354 C 154 354 147 344 147 325 L 147 285 C 147 262 135 254 118 250 C 135 246 147 238 147 215 L 147 175 C 147 156 154 146 170 146 Z" fill="#78716c"/>
+  <g transform="translate(1, 0)">
+    <!-- Code Curly Bracket { -->
+    <path d="M 37 20 C 29 20 23 25 23 34 L 23 43 C 23 48 19 50 14 50 C 19 50 23 52 23 57 L 23 66 C 23 75 29 80 37 80 L 37 73 C 32 73 30 70 30 64 L 30 56 C 30 51 25 48.5 20.5 48.5 C 25 48.5 30 46 30 41 L 30 33 C 30 27 32 24 37 24 Z" fill="#78716c"/>
 
-    <!-- Literary Serif 't' in Deep Sumi Charcoal -->
+    <!-- Literary Serif 't' in Deep Charcoal -->
     <g fill="#1c1917">
-      <!-- Crossbar -->
-      <rect x="180" y="200" width="150" height="26" rx="2"/>
-      
-      <!-- Vertical Stem & Serif Curve -->
-      <path d="M 235 130 C 235 130 235 160 210 190 L 235 190 L 235 320 C 235 355 255 375 295 375 C 315 375 330 368 335 362 L 328 340 C 322 344 312 348 300 348 C 275 348 262 334 262 310 L 262 130 Z"/>
+      <!-- Horizontal Crossbar -->
+      <rect x="39" y="37" width="41" height="8" rx="1"/>
 
-      <!-- Delicate Vermilion Proofreader Dot -->
-      <circle cx="340" cy="195" r="7" fill="#c2410c"/>
+      <!-- Top serif finial -->
+      <path d="M 54 18 L 47 31 L 54 31 Z"/>
+
+      <!-- Vertical Stem & Base Serif Curve -->
+      <path d="M 54 29 L 62 29 L 62 70 C 62 78 68 81 77 81 C 82 81 86 79.5 87.5 78 L 86 72 C 84.5 73.5 82 74.5 78.5 74.5 C 72 74.5 69.5 71 69.5 65 L 69.5 29 Z"/>
+
+      <!-- Vermilion Proofreading Accent -->
+      <circle cx="82.5" cy="35" r="2.2" fill="#c2410c"/>
     </g>
   </g>
 </svg>

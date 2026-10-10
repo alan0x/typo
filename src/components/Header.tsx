@@ -2,6 +2,7 @@ import React from "react";
 import { SlidersHorizontal, X } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { TypoLogo } from "./TypoLogo";
 
 interface HeaderProps {
   hotkey: string;
@@ -34,50 +35,56 @@ export const Header: React.FC<HeaderProps> = ({ hotkey, onOpenSettings }) => {
     <header
       data-tauri-drag-region
       onMouseDown={handleMouseDown}
-      className="titlebar-drag flex items-center justify-between px-4 py-3 border-b border-stone-200/90 bg-[#faf9f5] select-none cursor-grab active:cursor-grabbing transition-colors w-full"
+      className="titlebar-drag flex items-center justify-between px-4 py-2.5 border-b border-stone-200/90 bg-[#faf9f5] select-none cursor-grab active:cursor-grabbing transition-colors w-full"
     >
-      {/* Brand Identity: Editorial & Minimal */}
-      <div data-tauri-drag-region className="titlebar-drag flex items-center gap-2">
-        <img
-          src="/logo.svg"
-          alt="Typo Logo"
-          className="w-4 h-4 rounded-[4px] select-none pointer-events-none"
-        />
-        <span
-          data-tauri-drag-region
-          className="titlebar-drag font-serif text-sm tracking-widest uppercase font-bold text-stone-900"
-        >
-          Typo
-        </span>
-        <span
-          data-tauri-drag-region
-          className="titlebar-drag meta-caption text-stone-400 font-sans tracking-widest text-[9px] uppercase ml-1"
-        >
-          Prompt & Grammar Workshop
-        </span>
+      {/* Brand Lockup: Prominent Logo & Editorial Typography */}
+      <div data-tauri-drag-region className="titlebar-drag flex items-center gap-2.5">
+        <TypoLogo size={30} className="shadow-2xs rounded-lg" />
+        <div data-tauri-drag-region className="titlebar-drag flex flex-col justify-center">
+          <div data-tauri-drag-region className="titlebar-drag flex items-center gap-1.5 leading-none">
+            <span
+              data-tauri-drag-region
+              className="titlebar-drag font-serif text-[14px] tracking-wider uppercase font-bold text-stone-900 leading-none"
+            >
+              Typo
+            </span>
+            <span
+              data-tauri-drag-region
+              className="titlebar-drag font-mono text-[9px] text-stone-500 bg-stone-200/70 px-1 py-0.5 rounded leading-none"
+            >
+              HUD
+            </span>
+          </div>
+          <span
+            data-tauri-drag-region
+            className="titlebar-drag text-stone-400 font-sans tracking-wider text-[9px] uppercase leading-none mt-1 hidden xs:inline-block"
+          >
+            Prompt & Grammar Workshop
+          </span>
+        </div>
       </div>
 
       {/* Drag Canvas Middle Spacer */}
       <div
         data-tauri-drag-region
-        className="titlebar-drag flex-1 h-full mx-4 cursor-grab"
+        className="titlebar-drag flex-1 h-full mx-3 cursor-grab"
       />
 
       {/* Right Utility Bar */}
-      <div className="titlebar-no-drag flex items-center gap-3">
+      <div className="titlebar-no-drag flex items-center gap-2.5">
         <span
           data-tauri-drag-region
-          className="titlebar-drag hidden sm:inline-block font-mono text-[10px] text-stone-400 tracking-wider uppercase"
+          className="titlebar-drag hidden sm:inline-flex items-center px-2 py-0.5 bg-stone-200/50 border border-stone-300/60 rounded font-mono text-[10px] text-stone-500 tracking-wider"
         >
           {hotkey}
         </span>
 
-        <span className="w-px h-3 bg-stone-300/80 hidden sm:inline-block" />
+        <span className="w-px h-3.5 bg-stone-300/70 hidden sm:inline-block" />
 
         <button
           onClick={onOpenSettings}
           title="Preferences & Model Selection"
-          className="titlebar-no-drag p-1 text-stone-400 hover:text-stone-800 transition-colors cursor-pointer"
+          className="titlebar-no-drag p-1.5 text-stone-500 hover:text-stone-900 hover:bg-stone-200/60 rounded-md transition-colors cursor-pointer"
         >
           <SlidersHorizontal className="w-3.5 h-3.5" />
         </button>
@@ -85,7 +92,7 @@ export const Header: React.FC<HeaderProps> = ({ hotkey, onOpenSettings }) => {
         <button
           onClick={handleClose}
           title="Dismiss (Esc)"
-          className="titlebar-no-drag p-1 text-stone-400 hover:text-stone-900 transition-colors cursor-pointer"
+          className="titlebar-no-drag p-1.5 text-stone-500 hover:text-stone-900 hover:bg-stone-200/60 rounded-md transition-colors cursor-pointer"
         >
           <X className="w-3.5 h-3.5" />
         </button>
