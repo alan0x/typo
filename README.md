@@ -6,7 +6,7 @@
 ---
 
 <p align="center">
-  <img src="assets/hero-banner.jpg" alt="Typo Hero Showcase" width="100%" style="border-radius: 12px; box-shadow: 0 16px 36px rgba(0,0,0,0.15);" />
+  <img src="assets/screenshot-main.png" alt="Typo Real Interface Screenshot" width="85%" style="border-radius: 12px; box-shadow: 0 16px 36px rgba(0,0,0,0.12);" />
 </p>
 
 ---
@@ -27,13 +27,13 @@ When pairing with autonomous AI coding agents like **Claude Code**, **Cursor**, 
 
 ---
 
-## 📸 Interface Showcase
+## 📸 Real Interface Tour
 
 ### 1. The Prompt Workshop & Editorial Breakdown
-Typo adopts an understated, editorial aesthetic inspired by classic typography and tactile stationery:
+Actual capture of the desktop HUD in action:
 
 <p align="center">
-  <img src="assets/ui-refine-breakdown.svg" alt="Typo Prompt Workshop Breakdown" width="100%" style="border-radius: 12px;" />
+  <img src="assets/screenshot-main.png" alt="Typo Prompt Workshop Screenshot" width="85%" style="border-radius: 12px; box-shadow: 0 16px 36px rgba(0,0,0,0.12);" />
 </p>
 
 - **01 / Optimal For AI Agent**: Precision prompt with an editorial observation (*`Obs.`*) explaining why the phrasing elicits superior agent behavior.
@@ -46,7 +46,7 @@ Typo adopts an understated, editorial aesthetic inspired by classic typography a
 Bring Your Own Key directly from Google AI Studio. Typo automatically queries the Google Generative AI registry to populate your active key's real model options:
 
 <p align="center">
-  <img src="assets/ui-preferences.svg" alt="Preferences and Real Model Discovery" width="85%" style="border-radius: 12px;" />
+  <img src="assets/screenshot-preferences.png" alt="Preferences and Real Model Discovery Screenshot" width="70%" style="border-radius: 12px; box-shadow: 0 16px 36px rgba(0,0,0,0.12);" />
 </p>
 
 ---

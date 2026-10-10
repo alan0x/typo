@@ -10,17 +10,63 @@ import { Loader2, RefreshCw } from "lucide-react";
 import { REFINE_HOTKEY_LABEL } from "./utils/platform";
 
 export function App() {
-  const [settings, setSettings] = useState<AppSettings>(loadSettings);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [inputText, setInputText] = useState("");
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+  const isDemo = searchParams?.get("demo") === "true";
+
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    const loaded = loadSettings();
+    if (isDemo && !loaded.apiKey) {
+      return { ...loaded, apiKey: "AIzaSy_demo_key_example" };
+    }
+    return loaded;
+  });
+  const [isSettingsOpen, setIsSettingsOpen] = useState(searchParams?.get("modal") === "settings");
+  const [inputText, setInputText] = useState(
+    isDemo ? "I follow this artical to set you run in advisor mode, could you help and check if everything sattle down?" : ""
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<PolishResult | null>(null);
+  const [result, setResult] = useState<PolishResult | null>(
+    isDemo
+      ? {
+          bestForAgent:
+            "I followed this guide to enable advisor mode for you: https://code.claude.com/docs/en/advisor. Could you check whether advisor mode is configured correctly and working as expected?",
+          naturalVersion:
+            "I followed this guide to enable advisor mode for you. Could you help me verify that everything is set up correctly?",
+          agentReasoning:
+            "Explicitly states 'working as expected' to initiate active runtime verification rather than passive check.",
+          analysis: [
+            {
+              original: "artical",
+              issue: "Spelling error. In documentation contexts, 'guide' reads more natural.",
+              suggestion: "article / guide",
+            },
+            {
+              original: "I follow",
+              issue: "Action is already completed; past tense is grammatically required.",
+              suggestion: "I followed",
+            },
+            {
+              original: "set you run",
+              issue: "Unnatural verb phrasing in English.",
+              suggestion: "enable advisor mode for you",
+            },
+            {
+              original: "sattle down",
+              issue: "Misspelling of 'settle'. 'Settle down' refers to living or calming down, not system status.",
+              suggestion: "set up correctly",
+            },
+          ],
+        }
+      : null
+  );
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    setSettings(loadSettings());
-  }, []);
+    if (!isDemo) {
+      setSettings(loadSettings());
+    }
+  }, [isDemo]);
 
   // Listen to Tauri global shortcut trigger
   useEffect(() => {
