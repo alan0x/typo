@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Background with warm linen tone -->
+  <rect width="512" height="512" rx="112" fill="#faf9f5"/>
+  <rect width="510" height="510" x="1" y="1" rx="111" fill="none" stroke="#e7e5e4" stroke-width="2"/>
+
+  <!-- Brand Glyph: {t (Syntax & Serif Ligature) -->
+  <g transform="translate(48, 24)">
+    <!-- Code Curly Bracket { in Code Charcoal -->
+    <path d="M 170 120 C 145 120 125 135 125 165 L 125 210 C 125 235 110 245 92 250 C 110 255 125 265 125 290 L 125 335 C 125 365 145 380 170 380 L 170 354 C 154 354 147 344 147 325 L 147 285 C 147 262 135 254 118 250 C 135 246 147 238 147 215 L 147 175 C 147 156 154 146 170 146 Z" fill="#78716c"/>
+
+    <!-- Literary Serif 't' in Deep Sumi Charcoal -->
+    <g fill="#1c1917">
+      <!-- Crossbar -->
+      <rect x="180" y="200" width="150" height="26" rx="2"/>
+      
+      <!-- Vertical Stem & Serif Curve -->
+      <path d="M 235 130 C 235 130 235 160 210 190 L 235 190 L 235 320 C 235 355 255 375 295 375 C 315 375 330 368 335 362 L 328 340 C 322 344 312 348 300 348 C 275 348 262 334 262 310 L 262 130 Z"/>
+
+      <!-- Delicate Vermilion Proofreader Dot -->
+      <circle cx="340" cy="195" r="7" fill="#c2410c"/>
+    </g>
+  </g>
+</svg>

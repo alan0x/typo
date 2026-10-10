@@ -37,7 +37,12 @@ export const Header: React.FC<HeaderProps> = ({ hotkey, onOpenSettings }) => {
       className="titlebar-drag flex items-center justify-between px-4 py-3 border-b border-stone-200/90 bg-[#faf9f5] select-none cursor-grab active:cursor-grabbing transition-colors w-full"
     >
       {/* Brand Identity: Editorial & Minimal */}
-      <div data-tauri-drag-region className="titlebar-drag flex items-baseline gap-2.5">
+      <div data-tauri-drag-region className="titlebar-drag flex items-center gap-2">
+        <img
+          src="/logo.svg"
+          alt="Typo Logo"
+          className="w-4 h-4 rounded-[4px] select-none pointer-events-none"
+        />
         <span
           data-tauri-drag-region
           className="titlebar-drag font-serif text-sm tracking-widest uppercase font-bold text-stone-900"
@@ -46,7 +51,7 @@ export const Header: React.FC<HeaderProps> = ({ hotkey, onOpenSettings }) => {
         </span>
         <span
           data-tauri-drag-region
-          className="titlebar-drag meta-caption text-stone-400 font-sans tracking-widest text-[9px]"
+          className="titlebar-drag meta-caption text-stone-400 font-sans tracking-widest text-[9px] uppercase ml-1"
         >
           Prompt & Grammar Workshop
         </span>

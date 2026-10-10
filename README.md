@@ -1,7 +1,22 @@
-# Typo — AI English Coach & Prompt Lab 🚀
+<p align="center">
+  <img src="assets/logo.png" alt="Typo Logo" width="130" style="border-radius: 24px; box-shadow: 0 12px 32px rgba(0,0,0,0.08);" />
+</p>
 
-> **A quiet, editorial-grade desktop HUD for developers to refine English drafts and craft unambiguous AI prompts in real time.**  
-> Highlight text anywhere → Trigger via `Alt + Shift + E` (or `⌥⇧E`) → Review proofreading notes & optimized prompts → Press `Enter` to replace in-place.
+<h1 align="center">Typo</h1>
+
+<p align="center">
+  <strong>The Editorial HUD & Prompt Architect for Developers</strong><br>
+  <em>Refine rough English drafts and craft unambiguous AI prompts with quiet craftsmanship.</em>
+</p>
+
+<p align="center">
+  <a href="https://github.com/alan0x/typo/releases/latest"><img src="https://img.shields.io/github/v/release/alan0x/typo?style=flat-square&color=c2410c&label=release" alt="Latest Release" /></a>
+  <a href="https://github.com/alan0x/typo/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-stone?style=flat-square" alt="License" /></a>
+  <a href="https://github.com/alan0x/typo"><img src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows-stone?style=flat-square" alt="Platform" /></a>
+  <a href="https://github.com/alan0x/typo"><img src="https://img.shields.io/badge/stack-Tauri%202%20%7C%20React%2019-stone?style=flat-square" alt="Tech Stack" /></a>
+</p>
+
+> **Highlight text anywhere** → Trigger via `Alt + Shift + E` (Windows) or `⌥⇧E` (macOS) → Review proofreading notes & structured agent prompts → Press `Enter` to replace in-place.
 
 ---
 
@@ -119,6 +134,14 @@ pnpm tauri dev
 - [ ] **Flashcards & Mistake Notebook**: Periodically review your most common slips (spelling, tenses).
 - [ ] **TTS Pronunciation**: Listen to natural speech synthesis for verified sentences.
 - [ ] **Multi-Provider Support**: Anthropic Claude, OpenAI, DeepSeek, and local Ollama.
+
+---
+
+## ✒️ Brand Identity: The Syntax Ligature (`{t`)
+
+The Typo emblem marries the developer's rigid world of code syntax (`{`) with the fluid nuance of literary typography (`t`). 
+
+Modern software engineers write two distinct languages every day: machine logic and human communication. Typo stands right at their intersection—ensuring your prompts instruct autonomous AI agents with architectural precision, and your English prose communicates with natural warmth and clarity.
 
 ---
 
