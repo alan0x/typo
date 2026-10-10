@@ -23,6 +23,11 @@ fn show_window(app: tauri::AppHandle, text: Option<String>) -> Result<(), String
 }
 
 #[tauri::command]
+fn start_dragging(window: tauri::WebviewWindow) -> Result<(), String> {
+    window.start_dragging().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 fn replace_selection(app: tauri::AppHandle, text: String) -> Result<(), String> {
     // 1. Write the polished text to the clipboard
     app.clipboard()
@@ -144,6 +149,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             hide_window,
             show_window,
+            start_dragging,
             replace_selection
         ])
         .run(tauri::generate_context!())
