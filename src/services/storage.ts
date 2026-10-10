@@ -1,3 +1,5 @@
+import { DEFAULT_SUMMON_LABEL } from "../utils/platform";
+
 export interface AvailableModel {
   id: string;
   displayName: string;
@@ -44,7 +46,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   availableModels: DEFAULT_MODELS,
   autoReplaceOnEnter: true,
   autoPolishOnTrigger: true,
-  hotkey: "Alt + Shift + E",
+  hotkey: DEFAULT_SUMMON_LABEL,
 };
 
 export function loadSettings(): AppSettings {

@@ -7,6 +7,7 @@ import { polishTextWithGemini, PolishResult } from "./services/gemini";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { Loader2, RefreshCw } from "lucide-react";
+import { REFINE_HOTKEY_LABEL } from "./utils/platform";
 
 export function App() {
   const [settings, setSettings] = useState<AppSettings>(loadSettings);
@@ -152,7 +153,7 @@ export function App() {
             rows={2}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder="Type your draft in English, or press Alt+Shift+E on selected text in any app..."
+            placeholder={`Type your draft in English, or press ${settings.hotkey} on selected text in any app...`}
             className="w-full bg-transparent resize-none outline-none text-[12px] text-stone-900 placeholder-stone-400 font-sans leading-relaxed selectable-text"
           />
 
@@ -163,7 +164,7 @@ export function App() {
 
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-stone-600 font-mono hidden sm:inline">
-                ⌘↵ to refine
+                {REFINE_HOTKEY_LABEL}
               </span>
               <button
                 onClick={() => handlePolish()}
