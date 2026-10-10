@@ -85,9 +85,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="flex items-center justify-between pb-3.5 mb-3.5 border-b border-stone-200">
           <div className="flex items-center gap-3">
             <img
-              src="/logo.png"
+              src="/logo-icon.png"
               alt="Typo"
-              className="w-9 h-9 rounded-lg shadow-2xs border border-stone-200/90 object-cover object-top select-none pointer-events-none bg-white"
+              className="w-9 h-9 rounded-lg shadow-2xs border border-stone-200/90 object-contain select-none pointer-events-none bg-white"
             />
             <div>
               <div className="flex items-center gap-1.5 leading-none">

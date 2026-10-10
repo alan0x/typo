@@ -266,9 +266,9 @@ export function App() {
           <div className="flex-1 flex flex-col items-center justify-center text-center p-6 select-none animate-fade-in">
             <div className="mb-3.5">
               <img
-                src="/logo.png"
+                src="/logo-icon.png"
                 alt="Typo"
-                className="w-16 h-16 rounded-2xl shadow-sm border border-stone-200/90 object-cover object-top select-none pointer-events-none bg-white"
+                className="w-16 h-16 rounded-2xl shadow-sm border border-stone-200/90 object-contain select-none pointer-events-none bg-white"
               />
             </div>
             <p className="font-serif italic text-stone-800 text-[13px] max-w-xs leading-relaxed">
