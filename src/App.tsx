@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { Header } from "./components/Header";
 import { SettingsModal } from "./components/SettingsModal";
 import { ResultCard } from "./components/ResultCard";
-import { TypoLogo } from "./components/TypoLogo";
 import { loadSettings, saveSettings, AppSettings } from "./services/storage";
 import { polishTextWithGemini, PolishResult } from "./services/gemini";
 import { listen } from "@tauri-apps/api/event";
@@ -266,7 +265,11 @@ export function App() {
         {!loading && !result && !error && (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-6 select-none animate-fade-in">
             <div className="mb-3.5">
-              <TypoLogo size={52} className="shadow-xs rounded-2xl" />
+              <img
+                src="/logo.png"
+                alt="Typo"
+                className="w-16 h-16 rounded-2xl shadow-sm border border-stone-200/90 object-cover object-top select-none pointer-events-none bg-white"
+              />
             </div>
             <p className="font-serif italic text-stone-800 text-[13px] max-w-xs leading-relaxed">
               "The limits of my language mean the limits of my world."

@@ -2,7 +2,6 @@ import React from "react";
 import { SlidersHorizontal, X } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { TypoLogo } from "./TypoLogo";
 
 interface HeaderProps {
   hotkey: string;
@@ -39,7 +38,11 @@ export const Header: React.FC<HeaderProps> = ({ hotkey, onOpenSettings }) => {
     >
       {/* Brand Lockup: Prominent Logo & Editorial Typography */}
       <div data-tauri-drag-region className="titlebar-drag flex items-center gap-2.5">
-        <TypoLogo size={30} className="shadow-2xs rounded-lg" />
+        <img
+          src="/logo.png"
+          alt="Typo Logo"
+          className="w-8 h-8 rounded-lg shadow-2xs border border-stone-200/90 object-cover object-top select-none pointer-events-none bg-white"
+        />
         <div data-tauri-drag-region className="titlebar-drag flex flex-col justify-center">
           <div data-tauri-drag-region className="titlebar-drag flex items-center gap-1.5 leading-none">
             <span

@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { AppSettings, AvailableModel } from "../services/storage";
 import { Eye, EyeOff, X, ExternalLink, RefreshCw, AlertCircle, Check } from "lucide-react";
 import { fetchGeminiModels } from "../services/gemini";
-import { TypoLogo } from "./TypoLogo";
 
 interface SettingsModalProps {
   settings: AppSettings;
@@ -85,7 +84,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between pb-3.5 mb-3.5 border-b border-stone-200">
           <div className="flex items-center gap-3">
-            <TypoLogo size={36} className="shadow-2xs rounded-lg" />
+            <img
+              src="/logo.png"
+              alt="Typo"
+              className="w-9 h-9 rounded-lg shadow-2xs border border-stone-200/90 object-cover object-top select-none pointer-events-none bg-white"
+            />
             <div>
               <div className="flex items-center gap-1.5 leading-none">
                 <h2 className="font-serif text-[13px] font-bold tracking-wider uppercase text-stone-900 leading-none">
