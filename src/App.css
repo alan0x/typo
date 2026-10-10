@@ -16,7 +16,7 @@ body {
   -webkit-user-select: none;
 }
 
-/* Custom modern scrollbar */
+/* Warm, gentle scrollbar */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -27,15 +27,35 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(245, 158, 11, 0.2);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(245, 158, 11, 0.35);
 }
 
 .selectable-text {
   user-select: text;
   -webkit-user-select: text;
+}
+
+::selection {
+  background-color: rgba(245, 158, 11, 0.25);
+  color: #fef3c7;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

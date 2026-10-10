@@ -1,16 +1,47 @@
+export interface AvailableModel {
+  id: string;
+  displayName: string;
+  description?: string;
+}
+
 export interface AppSettings {
   apiKey: string;
   model: string;
+  availableModels: AvailableModel[];
   autoReplaceOnEnter: boolean;
   autoPolishOnTrigger: boolean;
   hotkey: string;
 }
 
-const STORAGE_KEY = "typo_settings_v1";
+const STORAGE_KEY = "typo_settings_v2";
+
+export const DEFAULT_MODELS: AvailableModel[] = [
+  {
+    id: "gemini-2.5-flash",
+    displayName: "Gemini 2.5 Flash",
+    description: "Fast, intelligent, and recommended for real-time writing",
+  },
+  {
+    id: "gemini-2.5-pro",
+    displayName: "Gemini 2.5 Pro",
+    description: "Deep reasoning for complex agent prompt design",
+  },
+  {
+    id: "gemini-2.0-flash",
+    displayName: "Gemini 2.0 Flash",
+    description: "Next-gen speedy model",
+  },
+  {
+    id: "gemini-1.5-flash",
+    displayName: "Gemini 1.5 Flash",
+    description: "Standard lightweight multimodal model",
+  },
+];
 
 export const DEFAULT_SETTINGS: AppSettings = {
   apiKey: "",
   model: "gemini-2.5-flash",
+  availableModels: DEFAULT_MODELS,
   autoReplaceOnEnter: true,
   autoPolishOnTrigger: true,
   hotkey: "Alt + Shift + E",
@@ -19,8 +50,28 @@ export const DEFAULT_SETTINGS: AppSettings = {
 export function loadSettings(): AppSettings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_SETTINGS;
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    if (!raw) {
+      // Try fallback to v1 if present
+      const oldRaw = localStorage.getItem("typo_settings_v1");
+      if (oldRaw) {
+        const parsed = JSON.parse(oldRaw);
+        return {
+          ...DEFAULT_SETTINGS,
+          ...parsed,
+          availableModels: DEFAULT_MODELS,
+        };
+      }
+      return DEFAULT_SETTINGS;
+    }
+    const parsed = JSON.parse(raw);
+    return {
+      ...DEFAULT_SETTINGS,
+      ...parsed,
+      availableModels:
+        parsed.availableModels && parsed.availableModels.length > 0
+          ? parsed.availableModels
+          : DEFAULT_MODELS,
+    };
   } catch (e) {
     console.error("Failed to load settings:", e);
     return DEFAULT_SETTINGS;

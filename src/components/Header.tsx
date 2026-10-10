@@ -1,5 +1,5 @@
 import React from "react";
-import { Sparkles, Settings, X, Terminal } from "lucide-react";
+import { Coffee, Settings, X, Command } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 
 interface HeaderProps {
@@ -15,30 +15,34 @@ export const Header: React.FC<HeaderProps> = ({ hotkey, onOpenSettings }) => {
   return (
     <header
       data-tauri-drag-region
-      className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-800/80 bg-zinc-900/60 select-none cursor-grab active:cursor-grabbing rounded-t-2xl"
+      className="flex items-center justify-between px-4 py-2.5 border-b border-stone-800/80 bg-stone-900/70 select-none cursor-grab active:cursor-grabbing rounded-t-2xl"
     >
-      <div className="flex items-center gap-2 pointer-events-none">
-        <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-sm">
-          <Sparkles className="w-3.5 h-3.5" />
+      <div className="flex items-center gap-2.5 pointer-events-none">
+        <div className="flex items-center justify-center w-7 h-7 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 text-stone-950 shadow-sm shadow-amber-950/40">
+          <Coffee className="w-3.5 h-3.5 text-stone-900" />
         </div>
-        <span className="font-semibold text-sm tracking-tight text-zinc-100 flex items-center gap-1.5">
-          Typo
-          <span className="text-[10px] px-1.5 py-0.5 rounded font-mono font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-            Agent Coach
-          </span>
-        </span>
+        <div className="flex flex-col">
+          <div className="flex items-center gap-1.5">
+            <span className="font-semibold text-sm tracking-tight text-stone-100">
+              Typo
+            </span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
+              Cozy Coach
+            </span>
+          </div>
+        </div>
       </div>
 
       <div className="flex items-center gap-1.5">
-        <div className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-800/60 text-zinc-400 text-[11px] font-mono border border-zinc-700/40">
-          <Terminal className="w-3 h-3 text-zinc-400" />
+        <div className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-lg bg-stone-800/80 text-stone-400 text-[11px] font-mono border border-stone-700/50">
+          <Command className="w-3 h-3 text-amber-400/80" />
           <span>{hotkey}</span>
         </div>
 
         <button
           onClick={onOpenSettings}
-          title="Settings"
-          className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80 transition-colors"
+          title="Settings & Model Selection"
+          className="p-1.5 rounded-lg text-stone-400 hover:text-stone-200 hover:bg-stone-800/80 transition-colors"
         >
           <Settings className="w-3.5 h-3.5" />
         </button>
@@ -46,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({ hotkey, onOpenSettings }) => {
         <button
           onClick={handleClose}
           title="Close (Esc)"
-          className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+          className="p-1.5 rounded-lg text-stone-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
         >
           <X className="w-3.5 h-3.5" />
         </button>
