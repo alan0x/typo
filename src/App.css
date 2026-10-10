@@ -17,6 +17,19 @@ body {
   color: #292524;
 }
 
+/* Native Titlebar Drag Regions for Chromium/WebView2 */
+.titlebar-drag {
+  -webkit-app-region: drag;
+  app-region: drag;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.titlebar-no-drag {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
 /* Cozy Warm Light scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
