@@ -18,10 +18,13 @@ jobs:
       matrix:
         include:
           - platform: 'macos-latest'
+            target: 'aarch64-apple-darwin'
             args: '--target aarch64-apple-darwin'
           - platform: 'macos-latest'
+            target: 'x86_64-apple-darwin'
             args: '--target x86_64-apple-darwin'
           - platform: 'windows-latest'
+            target: ''
             args: ''
 
     runs-on: ${{ matrix.platform }}
@@ -43,7 +46,7 @@ jobs:
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+          targets: ${{ matrix.target }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
@@ -58,15 +61,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'Typo ${{ github.ref_name }}'
+          tagName: v__VERSION__
+          releaseName: 'Typo v__VERSION__'
           releaseBody: |
-            See the assets below to download the first release of Typo for macOS and Windows.
-            
-            ### Artifacts
-            - **macOS (Apple Silicon M-series)**: `.dmg` (aarch64)
-            - **macOS (Intel)**: `.dmg` (x86_64)
-            - **Windows**: `.exe` (installer / portable) and `.msi`
+            ### Typo v__VERSION__ Release
+
+            Typo is a lightweight, distraction-free desktop HUD that transforms rough English drafts into crisp, professional prose and turns plain text instructions into structured AI agent prompts.
+
+            #### Downloads
+            - **macOS (Apple Silicon M1/M2/M3/M4)**: `Typo_*_aarch64.dmg`
+            - **macOS (Intel)**: `Typo_*_x64.dmg`
+            - **Windows (Installer)**: `Typo_*_x64-setup.exe` / `Typo_*_x64_en-US.msi`
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
