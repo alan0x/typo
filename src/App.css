@@ -11,13 +11,15 @@ body {
   padding: 0;
   overflow: hidden;
   background-color: transparent !important;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "SF Pro Text", Roboto, "Helvetica Neue", Arial, sans-serif;
   user-select: none;
   -webkit-user-select: none;
-  color: #292524;
+  color: #1c1917;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Native Titlebar Drag Regions for Chromium/WebView2 */
+/* Native Titlebar Drag Regions */
 .titlebar-drag {
   -webkit-app-region: drag;
   app-region: drag;
@@ -30,10 +32,10 @@ body {
   app-region: no-drag;
 }
 
-/* Cozy Warm Light scrollbar */
+/* Minimalist Editorial Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -41,12 +43,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(168, 162, 158, 0.35);
-  border-radius: 9999px;
+  background: rgba(120, 113, 108, 0.2);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(168, 162, 158, 0.55);
+  background: rgba(120, 113, 108, 0.4);
 }
 
 .selectable-text {
@@ -55,14 +57,22 @@ body {
 }
 
 ::selection {
-  background-color: rgba(245, 158, 11, 0.25);
-  color: #78350f;
+  background-color: #e7e5e4;
+  color: #0c0a09;
 }
 
-@keyframes fadeIn {
+/* Editorial micro-typography */
+.meta-caption {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+@keyframes refinedFadeIn {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(3px);
   }
   to {
     opacity: 1;
@@ -71,5 +81,5 @@ body {
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.16s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: refinedFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

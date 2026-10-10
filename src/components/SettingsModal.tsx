@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { AppSettings, AvailableModel } from "../services/storage";
-import { Key, Eye, EyeOff, Check, X, ExternalLink, Sparkles, RefreshCw, AlertCircle, Cpu } from "lucide-react";
+import { Eye, EyeOff, X, ExternalLink, RefreshCw, AlertCircle, Check } from "lucide-react";
 import { fetchGeminiModels } from "../services/gemini";
 
 interface SettingsModalProps {
@@ -31,7 +31,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     if (!formData.apiKey.trim()) {
       setStatusMessage({
         type: "error",
-        text: "Please enter your Gemini API Key first.",
+        text: "API key is required to connect to Gemini.",
       });
       return;
     }
@@ -39,7 +39,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setFetching(true);
     setStatusMessage({
       type: "info",
-      text: "Connecting to Google Gemini API and fetching available models...",
+      text: "Querying Google Generative AI registry...",
     });
 
     try {
@@ -57,13 +57,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
       setStatusMessage({
         type: "success",
-        text: `Connected! Found ${realModels.length} models for your account. You can now select any model below.`,
+        text: `Connected. Found ${realModels.length} compatible generation models for your key.`,
       });
     } catch (err: any) {
       console.error("Fetch models failed:", err);
       setStatusMessage({
         type: "error",
-        text: err.message || "Failed to connect. Please check your API key or network.",
+        text: err.message || "Failed to reach Google Gemini API.",
       });
     } finally {
       setFetching(false);
@@ -79,43 +79,41 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/40 backdrop-blur-xs animate-fade-in">
-      <div className="w-full max-w-md bg-[#faf8f5] border border-stone-200/90 rounded-2xl shadow-2xl p-5 text-stone-800">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/30 backdrop-blur-2xs animate-fade-in">
+      <div className="w-full max-w-md bg-[#faf9f5] border border-stone-300 rounded-xl shadow-xl p-5 text-stone-900 font-sans">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-stone-200">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-amber-100 text-amber-700 border border-amber-200">
-              <Key className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-sm font-semibold tracking-tight text-stone-900">Preferences & Models</h2>
-              <p className="text-[11px] text-stone-500">Configure your personal Gemini API key</p>
-            </div>
+        <div className="flex items-baseline justify-between pb-3 mb-3 border-b border-stone-200">
+          <div>
+            <h2 className="meta-caption text-stone-900 tracking-widest text-[11px]">Preferences</h2>
+            <p className="text-[11px] text-stone-500 font-serif italic mt-0.5">Model routing and security</p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-200/60 transition-colors"
+            className="p-1 text-stone-400 hover:text-stone-800 transition-colors cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="py-4 space-y-4 text-xs">
-          {/* API Key Input */}
+        {/* Form Body */}
+        <div className="py-2 space-y-4 text-xs">
+          {/* Key Input */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="font-medium text-stone-700">Google Gemini API Key</label>
+              <label className="text-[11px] font-medium text-stone-700 tracking-wide uppercase">
+                Google Gemini API Key
+              </label>
               <a
                 href="https://aistudio.google.com/app/apikey"
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-1 text-[11px] text-amber-700 hover:text-amber-800 transition-colors hover:underline"
+                className="text-[10px] font-mono text-stone-500 hover:text-stone-900 transition-colors underline flex items-center gap-1"
               >
-                <span>Get a free key</span>
+                <span>Generate key</span>
                 <ExternalLink className="w-2.5 h-2.5" />
               </a>
             </div>
+
             <div className="relative flex items-center">
               <input
                 type={showKey ? "text" : "password"}
@@ -125,72 +123,68 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   setFormData({ ...formData, apiKey: e.target.value });
                   setStatusMessage(null);
                 }}
-                className="w-full px-3 py-2 pr-9 bg-white border border-stone-200 rounded-xl font-mono text-stone-900 placeholder-stone-400 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/40 transition-colors shadow-2xs"
+                className="w-full px-3 py-1.5 pr-8 bg-white border border-stone-300 rounded-md font-mono text-[11px] text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-800 transition-colors"
               />
               <button
                 type="button"
                 onClick={() => setShowKey(!showKey)}
-                className="absolute right-2.5 text-stone-400 hover:text-stone-600"
+                className="absolute right-2.5 text-stone-400 hover:text-stone-700 cursor-pointer"
               >
-                {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
             </div>
-            <p className="text-[11px] text-stone-500">
-              BYOK (Bring Your Own Key): Stored strictly locally on this machine.
+            <p className="text-[10px] text-stone-400">
+              Keys remain sandboxed locally on this machine.
             </p>
           </div>
 
-          {/* Test & Fetch Real Models Button */}
+          {/* Test & Fetch action */}
           <div>
             <button
               onClick={handleTestAndFetch}
               disabled={fetching || !formData.apiKey.trim()}
-              className="flex items-center justify-center gap-2 w-full py-2 px-3 bg-amber-500 hover:bg-amber-400 active:scale-[0.99] disabled:opacity-50 text-stone-950 font-medium rounded-xl shadow-xs transition-all text-xs"
+              className="flex items-center justify-center gap-1.5 w-full py-1.5 px-3 bg-stone-100 hover:bg-stone-200 border border-stone-300 disabled:opacity-50 text-stone-800 font-sans font-medium rounded-md transition-colors text-[11px] cursor-pointer"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${fetching ? "animate-spin" : ""}`} />
-              <span>{fetching ? "Testing & Fetching Models..." : "Test Connection & Fetch Model List"}</span>
+              <RefreshCw className={`w-3 h-3 ${fetching ? "animate-spin text-stone-500" : "text-stone-500"}`} />
+              <span>{fetching ? "Querying registry..." : "Test Connection & Query Available Models"}</span>
             </button>
 
             {statusMessage && (
               <div
-                className={`mt-2.5 p-2.5 rounded-xl text-[11px] flex items-start gap-2 ${
+                className={`mt-2 p-2 rounded border text-[11px] flex items-start gap-1.5 leading-normal ${
                   statusMessage.type === "success"
-                    ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                    ? "bg-stone-50 text-stone-800 border-stone-300"
                     : statusMessage.type === "error"
-                    ? "bg-rose-50 text-rose-800 border border-rose-200"
-                    : "bg-stone-100 text-stone-700 border border-stone-200"
+                    ? "bg-stone-50 text-rose-800 border-rose-200"
+                    : "bg-stone-50 text-stone-600 border-stone-200"
                 }`}
               >
                 {statusMessage.type === "success" && (
-                  <Check className="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600" />
+                  <Check className="w-3 h-3 mt-0.5 shrink-0 text-stone-800" />
                 )}
                 {statusMessage.type === "error" && (
-                  <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0 text-rose-600" />
+                  <AlertCircle className="w-3 h-3 mt-0.5 shrink-0 text-rose-600" />
                 )}
-                {statusMessage.type === "info" && (
-                  <Sparkles className="w-3.5 h-3.5 mt-0.5 shrink-0 text-amber-600" />
-                )}
-                <span className="leading-relaxed">{statusMessage.text}</span>
+                <span>{statusMessage.text}</span>
               </div>
             )}
           </div>
 
-          {/* Dynamic Model Selector */}
+          {/* Dynamic Model Dropdown */}
           <div className="space-y-1.5 pt-1">
             <div className="flex items-center justify-between">
-              <label className="font-medium text-stone-700 flex items-center gap-1.5">
-                <Cpu className="w-3.5 h-3.5 text-amber-600" />
-                <span>Selected Model</span>
+              <label className="text-[11px] font-medium text-stone-700 tracking-wide uppercase">
+                Active Generation Model
               </label>
-              <span className="text-[10px] text-stone-500 font-mono">
-                {modelsList.length} models available
+              <span className="font-mono text-[10px] text-stone-400">
+                {modelsList.length} options
               </span>
             </div>
 
             <select
               value={formData.model}
               onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-              className="w-full px-3 py-2 bg-white border border-stone-200 rounded-xl text-stone-900 font-mono focus:outline-none focus:border-amber-500 transition-colors shadow-2xs"
+              className="w-full px-2.5 py-1.5 bg-white border border-stone-300 rounded-md text-stone-900 font-mono text-[11px] focus:outline-none focus:border-stone-800 transition-colors"
             >
               {modelsList.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -199,39 +193,38 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               ))}
             </select>
 
-            {/* Display description of selected model if present */}
             {(() => {
               const currentModelInfo = modelsList.find((m) => m.id === formData.model);
               return currentModelInfo?.description ? (
-                <p className="text-[11px] text-stone-500 leading-relaxed italic">
+                <p className="text-[10px] text-stone-500 leading-normal font-sans">
                   {currentModelInfo.description}
                 </p>
               ) : null;
             })()}
           </div>
 
-          {/* Shortcut reminder */}
-          <div className="pt-2 border-t border-stone-200 flex items-center justify-between text-stone-500">
-            <span>Global summon hotkey</span>
-            <span className="px-2 py-0.5 font-mono text-[11px] bg-stone-100 rounded-lg border border-stone-200 text-stone-700">
+          {/* Hotkey notice */}
+          <div className="pt-2 border-t border-stone-200 flex items-center justify-between text-stone-500 text-[11px]">
+            <span>Global summon</span>
+            <span className="font-mono text-[10px] text-stone-700 bg-stone-100 px-1.5 py-0.5 rounded border border-stone-200">
               {formData.hotkey}
             </span>
           </div>
         </div>
 
         {/* Footer actions */}
-        <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-200">
+        <div className="flex items-center justify-end gap-2 pt-3 mt-1 border-t border-stone-200">
           <button
             onClick={onClose}
-            className="px-3.5 py-1.5 text-xs text-stone-500 hover:text-stone-800 rounded-xl hover:bg-stone-100 transition-colors"
+            className="px-3 py-1 text-xs text-stone-500 hover:text-stone-800 transition-colors cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-1.5 text-xs font-medium text-stone-950 bg-amber-500 hover:bg-amber-400 active:scale-95 rounded-xl shadow-xs transition-all"
+            className="px-3 py-1 text-xs font-medium text-stone-50 bg-stone-900 hover:bg-stone-800 rounded-md transition-all cursor-pointer shadow-2xs"
           >
-            Save Preferences
+            Apply Preferences
           </button>
         </div>
       </div>
