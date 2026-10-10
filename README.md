@@ -101,7 +101,30 @@ Bring Your Own Key directly from Google AI Studio. Typo automatically queries th
 
 ---
 
-## 🚀 Quickstart
+## 📦 Downloads & Installation
+
+Pre-built binaries for **v0.1.0** are available on [**GitHub Releases**](https://github.com/alan0x/typo/releases/latest):
+
+- **macOS (Apple Silicon M1/M2/M3/M4)**: [`Typo_0.1.0_aarch64.dmg`](https://github.com/alan0x/typo/releases/download/v0.1.0/Typo_0.1.0_aarch64.dmg)
+- **macOS (Intel)**: [`Typo_0.1.0_x64.dmg`](https://github.com/alan0x/typo/releases/download/v0.1.0/Typo_0.1.0_x64.dmg)
+- **Windows**: [`Typo_0.1.0_x64-setup.exe`](https://github.com/alan0x/typo/releases/download/v0.1.0/Typo_0.1.0_x64-setup.exe) / [`Typo_0.1.0_x64_en-US.msi`](https://github.com/alan0x/typo/releases/download/v0.1.0/Typo_0.1.0_x64_en-US.msi)
+
+### 🍎 Note for macOS Users ("Typo is damaged and can't be opened")
+
+Because Typo is an independent open-source project and not signed with a paid Apple Developer certificate, macOS Gatekeeper attaches a quarantine attribute to downloaded `.app` bundles, displaying:
+> *"Typo is damaged and can't be opened. You should move it to the Trash."*
+
+**The app is completely safe and undamaged.** To open it:
+1. Open the `.dmg` and drag **Typo.app** into your **Applications** folder.
+2. Open **Terminal** and run:
+   ```bash
+   xattr -cr /Applications/Typo.app
+   ```
+3. Open Typo normally from Spotlight, Launchpad, or `/Applications`.
+
+---
+
+## 🚀 Build from Source
 
 ### Prerequisites
 - Node.js (v18+) & `pnpm`
