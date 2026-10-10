@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
@@ -14,12 +14,13 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   user-select: none;
   -webkit-user-select: none;
+  color: #292524;
 }
 
-/* Warm, gentle scrollbar */
+/* Cozy Warm Light scrollbar */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -27,12 +28,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(245, 158, 11, 0.2);
+  background: rgba(168, 162, 158, 0.35);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(245, 158, 11, 0.35);
+  background: rgba(168, 162, 158, 0.55);
 }
 
 .selectable-text {
@@ -42,7 +43,7 @@ body {
 
 ::selection {
   background-color: rgba(245, 158, 11, 0.25);
-  color: #fef3c7;
+  color: #78350f;
 }
 
 @keyframes fadeIn {
@@ -57,5 +58,5 @@ body {
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.16s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

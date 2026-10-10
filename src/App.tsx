@@ -110,7 +110,7 @@ export function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#191715]/95 border border-stone-800/80 rounded-2xl shadow-2xl backdrop-blur-2xl text-stone-100 overflow-hidden font-sans">
+    <div className="flex flex-col h-screen w-screen bg-[#faf8f5]/98 border border-stone-200/90 rounded-2xl shadow-2xl text-stone-850 overflow-hidden font-sans">
       <Header
         hotkey={settings.hotkey}
         onOpenSettings={() => setIsSettingsOpen(true)}
@@ -119,21 +119,21 @@ export function App() {
       <main className="flex-1 flex flex-col p-3.5 space-y-3 overflow-y-auto">
         {/* API Key Missing Banner */}
         {!settings.apiKey && (
-          <div className="flex items-center justify-between p-3.5 bg-amber-950/30 border border-amber-600/30 rounded-2xl text-xs text-amber-200">
+          <div className="flex items-center justify-between p-3.5 bg-amber-50/90 border border-amber-200/90 rounded-2xl text-xs text-amber-900 shadow-2xs">
             <div className="flex items-center gap-2.5">
-              <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-300 shrink-0">
+              <div className="p-1.5 rounded-lg bg-amber-100 text-amber-700 shrink-0">
                 <Key className="w-4 h-4" />
               </div>
               <div>
-                <p className="font-medium text-amber-100">Welcome to Typo</p>
-                <p className="text-[11px] text-amber-300/80">
+                <p className="font-medium text-amber-950">Welcome to Typo</p>
+                <p className="text-[11px] text-amber-800/80">
                   Please add your Gemini API Key in preferences to start polishing.
                 </p>
               </div>
             </div>
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className="px-3 py-1.5 text-xs font-medium bg-amber-500 hover:bg-amber-400 text-stone-950 rounded-xl transition-all shadow-sm shrink-0"
+              className="px-3 py-1.5 text-xs font-medium bg-amber-500 hover:bg-amber-400 text-stone-950 rounded-xl transition-all shadow-xs shrink-0"
             >
               Configure Key
             </button>
@@ -141,12 +141,12 @@ export function App() {
         )}
 
         {/* Input / Captured Draft Box */}
-        <div className="bg-stone-900/70 border border-stone-800/80 rounded-2xl p-3 space-y-2 focus-within:border-amber-500/50 transition-colors">
-          <div className="flex items-center justify-between text-[11px] text-stone-400">
-            <span className="font-medium flex items-center gap-1.5 text-stone-300">
-              <Feather className="w-3.5 h-3.5 text-amber-400" />
+        <div className="bg-white border border-stone-200/90 rounded-2xl p-3 space-y-2 focus-within:border-amber-400 focus-within:ring-2 focus-within:ring-amber-400/15 shadow-xs transition-all">
+          <div className="flex items-center justify-between text-[11px] text-stone-500">
+            <span className="font-medium flex items-center gap-1.5 text-stone-700">
+              <Feather className="w-3.5 h-3.5 text-amber-600" />
               <span>Your Draft</span>
-              <span className="text-[10px] text-stone-500 font-mono">(Ctrl+Enter to Polish)</span>
+              <span className="text-[10px] text-stone-400 font-mono">(Ctrl+Enter to Polish)</span>
             </span>
             {inputText && (
               <button
@@ -155,7 +155,7 @@ export function App() {
                   setResult(null);
                   setError(null);
                 }}
-                className="text-stone-500 hover:text-stone-300 text-xs transition-colors"
+                className="text-stone-400 hover:text-stone-700 text-xs transition-colors"
               >
                 Clear
               </button>
@@ -167,16 +167,16 @@ export function App() {
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             placeholder="Type your English draft or press Alt+Shift+E on any selected text..."
-            className="w-full bg-transparent resize-none outline-none text-xs text-stone-100 placeholder-stone-600 font-sans leading-relaxed selection:bg-amber-500/30"
+            className="w-full bg-transparent resize-none outline-none text-xs text-stone-900 placeholder-stone-400 font-sans leading-relaxed selection:bg-amber-200 selection:text-amber-950"
           />
-          <div className="flex items-center justify-between pt-1 border-t border-stone-800/50">
-            <span className="text-[10px] text-stone-500 font-mono">
+          <div className="flex items-center justify-between pt-1 border-t border-stone-100">
+            <span className="text-[10px] text-stone-400 font-mono">
               Model: {settings.model}
             </span>
             <button
               onClick={() => handlePolish()}
               disabled={loading || !inputText.trim()}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 active:scale-95 disabled:opacity-40 text-stone-950 text-xs font-medium rounded-xl transition-all shadow-sm"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 active:scale-95 disabled:opacity-40 text-stone-950 text-xs font-medium rounded-xl transition-all shadow-xs"
             >
               {loading ? (
                 <>
@@ -195,15 +195,15 @@ export function App() {
 
         {/* Error message */}
         {error && (
-          <div className="flex items-start gap-2.5 p-3 bg-rose-950/40 border border-rose-800/40 rounded-2xl text-xs text-rose-300">
-            <AlertCircle className="w-4 h-4 mt-0.5 text-rose-400 shrink-0" />
+          <div className="flex items-start gap-2.5 p-3 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-800">
+            <AlertCircle className="w-4 h-4 mt-0.5 text-rose-600 shrink-0" />
             <div className="flex-1">
-              <p className="font-medium">Could not complete analysis</p>
-              <p className="text-[11px] text-rose-400/90 mt-0.5">{error}</p>
+              <p className="font-medium text-rose-900">Could not complete analysis</p>
+              <p className="text-[11px] text-rose-700 mt-0.5">{error}</p>
             </div>
             <button
               onClick={() => handlePolish()}
-              className="p-1 hover:bg-rose-900/40 rounded-lg text-rose-300 transition-colors"
+              className="p-1 hover:bg-rose-100 rounded-lg text-rose-700 transition-colors"
               title="Retry"
             >
               <RefreshCw className="w-3.5 h-3.5" />
@@ -213,10 +213,10 @@ export function App() {
 
         {/* Loading skeleton */}
         {loading && (
-          <div className="p-4 bg-stone-900/50 border border-stone-800/60 rounded-2xl space-y-3 animate-pulse">
-            <div className="h-4 bg-stone-800/80 rounded-lg w-1/3" />
-            <div className="h-12 bg-stone-800/60 rounded-xl" />
-            <div className="h-16 bg-stone-800/40 rounded-xl" />
+          <div className="p-4 bg-white border border-stone-200 rounded-2xl space-y-3 animate-pulse shadow-xs">
+            <div className="h-4 bg-stone-100 rounded-lg w-1/3" />
+            <div className="h-12 bg-stone-100 rounded-xl" />
+            <div className="h-16 bg-stone-50 rounded-xl" />
           </div>
         )}
 
@@ -228,13 +228,13 @@ export function App() {
         {/* Empty state tip when idle */}
         {!loading && !result && !error && (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-stone-500 space-y-2.5 select-none">
-            <div className="w-12 h-12 rounded-2xl bg-stone-900 border border-stone-800/80 flex items-center justify-center text-amber-400/80 shadow-inner">
+            <div className="w-12 h-12 rounded-2xl bg-white border border-stone-200 flex items-center justify-center text-amber-500 shadow-2xs">
               <Sparkles className="w-6 h-6" />
             </div>
-            <p className="text-xs font-medium text-stone-300">Make English feel natural and effortless</p>
+            <p className="text-xs font-medium text-stone-800">Make English feel natural and effortless</p>
             <p className="text-[11px] text-stone-500 max-w-xs leading-relaxed">
               Highlight text in your terminal or editor, press{" "}
-              <kbd className="px-1.5 py-0.5 rounded-md bg-stone-800 text-stone-300 font-mono text-[10px] border border-stone-700/50">
+              <kbd className="px-1.5 py-0.5 rounded-md bg-stone-100 text-stone-700 font-mono text-[10px] border border-stone-200">
                 {settings.hotkey}
               </kbd>
               , and let Typo transform your draft.
