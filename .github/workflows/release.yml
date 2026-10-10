@@ -60,12 +60,6 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tagName: v__VERSION__
           releaseName: 'Typo v__VERSION__'
@@ -127,6 +121,6 @@ jobs:
           echo "Built $PKG_NAME successfully!"
 
           # 5. Upload .pkg to GitHub Release
-          gh release upload v0.1.0 "$PKG_NAME" --clobber
+          gh release upload v0.1.0 "$PKG_NAME" --clobber || gh release upload "${{ github.ref_name }}" "$PKG_NAME" --clobber || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
