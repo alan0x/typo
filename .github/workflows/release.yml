@@ -60,6 +60,12 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tagName: v__VERSION__
           releaseName: 'Typo v__VERSION__'
@@ -69,9 +75,58 @@ jobs:
             Typo is a lightweight, distraction-free desktop HUD that transforms rough English drafts into crisp, professional prose and turns plain text instructions into structured AI agent prompts.
 
             #### Downloads
-            - **macOS (Apple Silicon M1/M2/M3/M4)**: `Typo_*_aarch64.dmg`
-            - **macOS (Intel)**: `Typo_*_x64.dmg`
+            - **macOS (Recommended 1-Click Installer)**: `Typo_*_aarch64.pkg` (Apple Silicon) / `Typo_*_x64.pkg` (Intel)
+            - **macOS (Disk Image)**: `Typo_*_aarch64.dmg` / `Typo_*_x64.dmg`
             - **Windows (Installer)**: `Typo_*_x64-setup.exe` / `Typo_*_x64_en-US.msi`
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
+
+      - name: Build and Upload macOS .pkg Installer
+        if: matrix.platform == 'macos-latest'
+        run: |
+          # 1. Locate the built Typo.app
+          APP_PATH=""
+          if [ -d "src-tauri/target/${{ matrix.target }}/release/bundle/macos/Typo.app" ]; then
+            APP_PATH="src-tauri/target/${{ matrix.target }}/release/bundle/macos/Typo.app"
+          elif [ -d "src-tauri/target/release/bundle/macos/Typo.app" ]; then
+            APP_PATH="src-tauri/target/release/bundle/macos/Typo.app"
+          else
+            APP_PATH=$(find src-tauri/target -name "Typo.app" -type d | head -n 1)
+          fi
+
+          echo "Target Typo.app found at: $APP_PATH"
+
+          # 2. Ad-hoc sign the app bundle
+          codesign --force --deep --sign - "$APP_PATH" || true
+
+          # 3. Create postinstall script to strip quarantine upon installation
+          mkdir -p .pkg-scripts
+          cat << 'EOF' > .pkg-scripts/postinstall
+          #!/bin/bash
+          APP_DEST="/Applications/Typo.app"
+          if [ -d "$APP_DEST" ]; then
+            xattr -cr "$APP_DEST" 2>/dev/null || true
+            chmod -R 755 "$APP_DEST" 2>/dev/null || true
+          fi
+          exit 0
+          EOF
+          chmod +x .pkg-scripts/postinstall
+
+          # 4. Build .pkg installer
+          ARCH_NAME="${{ matrix.target == 'aarch64-apple-darwin' && 'aarch64' || 'x64' }}"
+          PKG_NAME="Typo_0.1.0_${ARCH_NAME}.pkg"
+
+          pkgbuild --component "$APP_PATH" \
+                   --install-location "/Applications" \
+                   --scripts .pkg-scripts \
+                   --identifier "com.typo.desktop" \
+                   --version "0.1.0" \
+                   "$PKG_NAME"
+
+          echo "Built $PKG_NAME successfully!"
+
+          # 5. Upload .pkg to GitHub Release
+          gh release upload v0.1.0 "$PKG_NAME" --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
