@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 720" width="100%" height="100%">
+  <defs>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#1c1917" flood-opacity="0.12" />
+      <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#1c1917" flood-opacity="0.06" />
+    </filter>
+    <style>
+      .font-sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+      .font-mono { font-family: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace; }
+      .font-serif { font-family: Georgia, Cambria, "Times New Roman", Times, serif; }
+      .meta { font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+    </style>
+  </defs>
+
+  <!-- Ambient Backdrop -->
+  <rect width="100%" height="100%" fill="#f2f0ea" rx="16" />
+
+  <!-- Main HUD Window Container -->
+  <g transform="translate(100, 40)" filter="url(#shadow)">
+    <!-- Window Body -->
+    <rect width="680" height="640" rx="14" fill="#f7f6f2" stroke="#d6d3d1" stroke-width="1" />
+
+    <!-- Window Header -->
+    <g transform="translate(0, 0)">
+      <rect width="680" height="48" rx="14" fill="#faf9f5" />
+      <!-- Clip bottom corners of header -->
+      <rect y="34" width="680" height="14" fill="#faf9f5" />
+      <line x1="0" y1="48" x2="680" y2="48" stroke="#e7e5e4" stroke-width="1" />
+
+      <!-- Left Wordmark -->
+      <text x="24" y="30" class="font-serif" font-size="14" font-weight="bold" letter-spacing="2" fill="#1c1917">TYPO</text>
+      <text x="76" y="29" class="meta" fill="#a8a29e">Prompt &amp; Grammar Workshop</text>
+
+      <!-- Center Grip Handle -->
+      <line x1="330" y1="24" x2="350" y2="24" stroke="#d6d3d1" stroke-width="2" stroke-linecap="round" />
+
+      <!-- Right Actions -->
+      <text x="560" y="29" class="font-mono" font-size="10" fill="#a8a29e" letter-spacing="1">ALT SHIFT E</text>
+      <line x1="626" y1="20" x2="626" y2="30" stroke="#e7e5e4" stroke-width="1" />
+      <circle cx="646" cy="24" r="5" fill="none" stroke="#78716c" stroke-width="1.2" />
+      <line x1="646" y1="21" x2="646" y2="27" stroke="#78716c" stroke-width="1.2" />
+    </g>
+
+    <!-- Content Workspace -->
+    <g transform="translate(24, 66)">
+      <!-- 1. Input Draft Box -->
+      <g>
+        <rect width="632" height="96" rx="8" fill="#ffffff" stroke="#e7e5e4" stroke-width="1" />
+        <text x="14" y="22" class="meta" fill="#78716c">Input Draft</text>
+        <text x="590" y="22" class="font-mono" font-size="10" fill="#a8a29e">Clear</text>
+
+        <text x="14" y="44" class="font-sans" font-size="12" fill="#44403c">I follow this artical to set you run in advisor mode,</text>
+        <text x="14" y="62" class="font-sans" font-size="12" fill="#44403c">could you help and check if everything sattle down?</text>
+
+        <line x1="14" y1="74" x2="618" y2="74" stroke="#f5f5f4" stroke-width="1" />
+        <text x="14" y="87" class="font-mono" font-size="10" fill="#a8a29e">gemini-2.5-flash</text>
+        <text x="500" y="87" class="font-mono" font-size="10" fill="#78716c">Ctrl+Enter to refine</text>
+        
+        <!-- Button -->
+        <rect x="532" y="76" width="86" height="16" rx="4" fill="#1c1917" />
+        <text x="548" y="88" class="font-sans" font-size="9" font-weight="600" fill="#fafaf9">Refined</text>
+      </g>
+
+      <!-- 2. Section 01: Optimal For AI Agent -->
+      <g transform="translate(0, 110)">
+        <rect width="632" height="150" rx="10" fill="#ffffff" stroke="#e7e5e4" stroke-width="1" />
+        
+        <!-- Header bar -->
+        <text x="16" y="26" class="meta" fill="#1c1917">01 / Optimal For AI Agent</text>
+        <text x="475" y="26" class="font-mono" font-size="11" fill="#78716c">Copy</text>
+
+        <rect x="515" y="14" width="102" height="22" rx="5" fill="#1c1917" />
+        <text x="526" y="28" class="font-sans" font-size="10" font-weight="500" fill="#f5f5f4">Replace in editor ↵</text>
+
+        <line x1="16" y1="38" x2="616" y2="38" stroke="#fafaf9" stroke-width="1" />
+
+        <!-- Polished text -->
+        <text x="16" y="60" class="font-sans" font-size="12.5" font-weight="500" fill="#1c1917">I followed this guide to enable advisor mode for you.</text>
+        <text x="16" y="80" class="font-sans" font-size="12.5" font-weight="500" fill="#1c1917">Could you check whether advisor mode is configured correctly</text>
+        <text x="16" y="100" class="font-sans" font-size="12.5" font-weight="500" fill="#1c1917">and working as expected?</text>
+
+        <!-- Marginal note -->
+        <line x1="16" y1="116" x2="616" y2="116" stroke="#f5f5f4" stroke-width="1" />
+        <text x="16" y="132" class="font-serif" font-style="italic" font-size="11" fill="#a8a29e">Obs.</text>
+        <text x="46" y="132" class="font-sans" font-size="11" fill="#57534e">Explicitly states 'working as expected' to initiate active runtime verification rather than passive check.</text>
+      </g>
+
+      <!-- 3. Section 02: Casual & Peer Phrasing -->
+      <g transform="translate(0, 272)">
+        <rect width="632" height="68" rx="8" fill="#fcfbf9" stroke="#e7e5e4" stroke-width="1" />
+        <text x="14" y="22" class="meta" fill="#a8a29e">02 / Casual &amp; Peer Phrasing</text>
+        <text x="585" y="22" class="font-mono" font-size="10" fill="#78716c">Use this</text>
+
+        <text x="14" y="44" class="font-sans" font-size="11.5" fill="#44403c">I followed this guide to enable advisor mode for you. Could you help me verify that everything is set up correctly?</text>
+      </g>
+
+      <!-- 4. Section 03: Proofreading Notes -->
+      <g transform="translate(0, 352)">
+        <text x="2" y="16" class="meta" fill="#a8a29e">03 / Proofreading Notes</text>
+        <line x1="140" y1="12" x2="630" y2="12" stroke="#e7e5e4" stroke-width="1" />
+
+        <!-- Item A -->
+        <g transform="translate(0, 26)">
+          <rect width="632" height="38" rx="6" fill="#ffffff" stroke="#e7e5e4" stroke-width="1" />
+          <text x="14" y="18" class="font-mono" font-size="11" text-decoration="line-through" fill="#a8a29e">artical</text>
+          <text x="68" y="18" class="font-sans" font-size="11" fill="#d6d3d1">→</text>
+          <text x="86" y="18" class="font-mono" font-size="11" font-weight="600" fill="#1c1917">article / guide</text>
+          <text x="14" y="32" class="font-sans" font-size="10.5" fill="#78716c">Spelling error. In documentation contexts, 'guide' reads more natural.</text>
+        </g>
+
+        <!-- Item B -->
+        <g transform="translate(0, 70)">
+          <rect width="632" height="38" rx="6" fill="#ffffff" stroke="#e7e5e4" stroke-width="1" />
+          <text x="14" y="18" class="font-mono" font-size="11" text-decoration="line-through" fill="#a8a29e">I follow</text>
+          <text x="76" y="18" class="font-sans" font-size="11" fill="#d6d3d1">→</text>
+          <text x="94" y="18" class="font-mono" font-size="11" font-weight="600" fill="#1c1917">I followed</text>
+          <text x="14" y="32" class="font-sans" font-size="10.5" fill="#78716c">Action is already completed; past tense is grammatically required.</text>
+        </g>
+
+        <!-- Item C -->
+        <g transform="translate(0, 114)">
+          <rect width="632" height="38" rx="6" fill="#ffffff" stroke="#e7e5e4" stroke-width="1" />
+          <text x="14" y="18" class="font-mono" font-size="11" text-decoration="line-through" fill="#a8a29e">sattle down</text>
+          <text x="94" y="18" class="font-sans" font-size="11" fill="#d6d3d1">→</text>
+          <text x="112" y="18" class="font-mono" font-size="11" font-weight="600" fill="#1c1917">set up correctly</text>
+          <text x="14" y="32" class="font-sans" font-size="10.5" fill="#78716c">Misspelling of 'settle'. Furthermore, 'settle down' refers to living or calming down, not system status.</text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

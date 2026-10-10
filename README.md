@@ -1,101 +1,127 @@
-# Typo - AI English Coach for Developers 🚀
+# Typo — AI English Coach & Prompt Lab 🚀
 
-> **A lightweight desktop HUD companion for developers to polish English and optimize AI prompts in real time.**  
-> Select any text → Press hotkey (`Alt + Shift + E`) → Review structured diagnostic cards & AI-optimized prompts → Hit `Enter` to replace in-place.
+> **A quiet, editorial-grade desktop HUD for developers to refine English drafts and craft unambiguous AI prompts in real time.**  
+> Highlight text anywhere → Trigger via `Alt + Shift + E` (or `⌥⇧E`) → Review proofreading notes & optimized prompts → Press `Enter` to replace in-place.
+
+---
+
+<p align="center">
+  <img src="assets/hero-banner.jpg" alt="Typo Hero Showcase" width="100%" style="border-radius: 12px; box-shadow: 0 16px 36px rgba(0,0,0,0.15);" />
+</p>
 
 ---
 
 ## 💡 Why Typo?
 
-When pairing with AI coding agents like **Claude Code**, **Cursor**, or **Antigravity**, English provides the highest accuracy, minimal ambiguity, and best instruction following. However, non-native English speakers frequently encounter:
-1. **Spelling & grammatical oversights** (e.g., `artical`, `sattle down`, or `I follow` when `I followed` was intended).
-2. **Ambiguous or sub-optimal prompt structure** (AI agents may misinterpret vague phrases or fail to run status verification).
-3. **Broken workflow & context switching**: Manually copying drafts to ChatGPT/Gemini web interfaces, asking for grammar review, and pasting them back disrupts developer flow.
+When pairing with autonomous AI coding agents like **Claude Code**, **Cursor**, or **Antigravity**, English provides the most reliable instruction following and technical context. However, non-native English speakers frequently encounter three friction points:
 
-**Typo turns this cumbersome loop into a 1-second background action**:
-- 🔍 **Instant Diagnostics**: A breakdown table detailing the original error, underlying grammar/tense/spelling issue, and recommended fixes.
-- 🤖 **Agent-First Prompt Optimization**: Generates an unambiguous, action-oriented prompt tailored specifically for AI coding assistants.
-- 💬 **Idiomatic Natural Phrasing**: Provides a fluent alternative suitable for human colleagues, GitHub PRs, and Slack.
-- ⚡ **Zero-Click In-Place Replacement**: Press `Enter` to automatically overwrite your selected text with the polished prompt and dismiss the HUD.
-- 🔑 **Privacy & BYOK**: Bring Your Own Key (Google Gemini API). Your API keys are stored locally on your device and never uploaded to any intermediate servers.
+1. **Spelling & grammatical oversights**: Small slips like `artical` or `I follow` (when `I followed` was intended) degrade prompt quality.
+2. **Ambiguous directives**: Vague wording like *"check if everything settled down"* invites superficial replies rather than thorough execution.
+3. **Severe context switching**: Copying back and forth between terminal/IDE and web LLM chats fragments developer flow.
+
+**Typo compresses this entire review cycle into a single keystroke**:
+- 🔍 **Proofreading Marginalia**: Striking through errors and offering concise notes on idiomatic nuance.
+- 🤖 **Agent-First Directives**: Generating action-oriented prompts that instruct agents to verify runtime status and execute tests.
+- 💬 **Peer Phrasing**: Providing natural colloquial alternatives for Slack and GitHub reviews.
+- ⚡ **Zero-Friction In-Place Replacement**: Pressing `Enter` automatically writes the refined text back to your editor and dismisses the window.
 
 ---
 
-## ✨ Features
+## 📸 Interface Showcase
 
-- **Global Trigger (`Alt + Shift + E`)**: Captures selected text in terminals, IDEs, or browsers without opening a bulky window.
-- **Floating HUD Window**: Pops up directly next to your cursor with sleek, transparent frosted-glass styling and boundary detection.
-- **Diagnostic Table**: Learn *why* a phrase was modified (`Original` | `Issue` | `Suggestion`), accelerating natural language acquisition.
-- **AI Agent Rationales**: Explains why specific wording prompts better agent verification (e.g., asking to check runtime status vs. just configuration files).
-- **One-Key In-Place Paste (`Enter`)**: Replaces the source text in your active editor or terminal and hides itself seamlessly.
-- **Ultra Lightweight**: Built with **Tauri 2.0 (Rust) + React 19 + Tailwind CSS**, consuming only ~30MB of RAM.
+### 1. The Prompt Workshop & Editorial Breakdown
+Typo adopts an understated, editorial aesthetic inspired by classic typography and tactile stationery:
+
+<p align="center">
+  <img src="assets/ui-refine-breakdown.svg" alt="Typo Prompt Workshop Breakdown" width="100%" style="border-radius: 12px;" />
+</p>
+
+- **01 / Optimal For AI Agent**: Precision prompt with an editorial observation (*`Obs.`*) explaining why the phrasing elicits superior agent behavior.
+- **02 / Casual & Peer Phrasing**: Clean alternatives for team communications.
+- **03 / Proofreading Notes**: Side-by-side annotations showing crossed-out original text with grammatical rationale.
+
+---
+
+### 2. BYOK & Dynamic Model Discovery
+Bring Your Own Key directly from Google AI Studio. Typo automatically queries the Google Generative AI registry to populate your active key's real model options:
+
+<p align="center">
+  <img src="assets/ui-preferences.svg" alt="Preferences and Real Model Discovery" width="85%" style="border-radius: 12px;" />
+</p>
+
+---
+
+## ✨ Core Features
+
+- **🎯 Cross-Platform Global Summon**: Works globally on Windows (`Alt + Shift + E`) and macOS (`⌥⇧E`).
+- **⚡ Native Text Capture**: Automatically grabs selected text upon hotkey trigger without manual `Ctrl+C`.
+- **🖐️ Full Titlebar Dragging**: Smooth, native window movement anywhere across the top bar.
+- **🤖 Dynamic Model Routing**: Query and switch between `gemini-2.5-flash`, `gemini-2.5-pro`, and any available generative model.
+- **🌿 Quiet Craftsmanship**: Warm linen canvas (`#f7f6f2`), quiet typography, and zero flashy gimmicks.
+- **🪶 Ultra-Low Footprint**: Powered by **Tauri 2.0 (Rust) + React 19 + Tailwind CSS**, consuming only ~30MB of RAM.
+
+---
+
+## ⌨️ Shortcuts Reference
+
+| Action | Windows / Linux | macOS |
+| :--- | :--- | :--- |
+| **Summon Typo HUD** | `Alt + Shift + E` | `⌥⇧E` |
+| **Replace in Source & Dismiss** | `Enter` (when card is focused) | `Return` |
+| **Refine Draft Input** | `Ctrl + Enter` | `⌘↵` |
+| **Dismiss Window** | `Esc` | `Esc` |
 
 ---
 
 ## 🛠️ Tech Stack
 
 - **Desktop Framework**: [Tauri 2.0](https://tauri.app/) (Rust backend)
-- **Frontend**: React 19 + TypeScript + Vite + Tailwind CSS
-- **Iconography**: [Lucide React](https://lucide.dev/)
-- **Model Integration**: Google Gemini API (`gemini-2.5-flash` by default for ultra-low latency & high intelligence)
-- **Native OS Capabilities**:
-  - `tauri-plugin-global-shortcut`: System-level global hotkey listener
-  - `tauri-plugin-clipboard-manager`: Safe clipboard management
-  - `enigo`: Native key simulation for text selection grab and in-place replacement
+- **Frontend Architecture**: React 19 + TypeScript + Vite + Tailwind CSS
+- **Model Provider**: Google Gemini API via official endpoint
+- **System Capabilities**:
+  - `tauri-plugin-global-shortcut`: System-level key listeners
+  - `tauri-plugin-clipboard-manager`: Local clipboard integration
+  - `enigo` & native virtual key events: Fast selection grab & paste-back
   - System Tray integration
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Quickstart
 
 ### Prerequisites
-
 - Node.js (v18+) & `pnpm`
 - Rust & Cargo (1.75+)
 
-### Installation & Development
+### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/<org>/typo.git
+git clone https://github.com/alan0x/typo.git
 cd typo
 
 # Install frontend dependencies
 pnpm install
 
-# Launch in development mode
+# Run in development mode
 pnpm tauri dev
 ```
 
-### Configuration (BYOK)
-
-1. Launch Typo and click the **Settings (⚙️)** icon in the HUD header.
+### Configuration
+1. Open Typo and click the **Preferences (Sliders)** icon in the header.
 2. Enter your [Google Gemini API Key](https://aistudio.google.com/app/apikey).
-3. Click **Test Gemini Connection** to verify your key.
-4. Click **Save Changes**.
-
----
-
-## ⌨️ Shortcuts
-
-| Action | Shortcut |
-| :--- | :--- |
-| **Summon Typo HUD** | `Alt + Shift + E` |
-| **Replace in Source & Dismiss** | `Enter` (when HUD card is focused) |
-| **Polish Custom Input** | `Ctrl + Enter` / `Cmd + Enter` |
-| **Dismiss HUD** | `Esc` |
+3. Click **Test Connection & Query Available Models** to discover your available models.
+4. Select your preferred model (e.g. `gemini-2.5-flash`) and click **Apply Preferences**.
 
 ---
 
 ## 🗺️ Roadmap
 
-- [ ] **Mistake & Vocabulary Notebook**: Automatically collect recurrent spelling and tense mistakes for weekly review.
-- [ ] **Selection Hover Widget**: Optional floating pill near the cursor on text selection without needing key combos.
-- [ ] **Pronunciation (TTS)**: Listen to native pronunciation of polished expressions.
-- [ ] **Multi-Provider Support**: Add OpenAI, Anthropic Claude, DeepSeek, and local Ollama integrations.
+- [ ] **Flashcards & Mistake Notebook**: Periodically review your most common slips (spelling, tenses).
+- [ ] **TTS Pronunciation**: Listen to natural speech synthesis for verified sentences.
+- [ ] **Multi-Provider Support**: Anthropic Claude, OpenAI, DeepSeek, and local Ollama.
 
 ---
 
 ## 📄 License
 
-MIT License © 2026
+MIT License © 2026 alan0x
