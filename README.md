@@ -103,18 +103,18 @@ Bring Your Own Key directly from Google AI Studio. Typo automatically queries th
 
 ## 📦 Downloads & Installation
 
-Pre-built binaries for **v0.1.0** are available on [**GitHub Releases**](https://github.com/alan0x/typo/releases/latest):
+Pre-built binaries for **v0.1.1** are available on [**GitHub Releases**](https://github.com/alan0x/typo/releases/latest):
 
 - **macOS (Recommended 1-Click Installer)**:
-  - Apple Silicon (M1/M2/M3/M4): [`Typo_0.1.0_aarch64.pkg`](https://github.com/alan0x/typo/releases/download/v0.1.0/Typo_0.1.0_aarch64.pkg)
-  - Intel: [`Typo_0.1.0_x64.pkg`](https://github.com/alan0x/typo/releases/download/v0.1.0/Typo_0.1.0_x64.pkg)
+  - Apple Silicon (M1/M2/M3/M4): [`Typo_0.1.1_aarch64.pkg`](https://github.com/alan0x/typo/releases/download/v0.1.1/Typo_0.1.1_aarch64.pkg)
+  - Intel: [`Typo_0.1.1_x64.pkg`](https://github.com/alan0x/typo/releases/download/v0.1.1/Typo_0.1.1_x64.pkg)
   *(Standard native macOS guided installer that configures Typo with zero terminal commands)*
 - **macOS (Disk Image .dmg)**:
-  - Apple Silicon: [`Typo_0.1.0_aarch64.dmg`](https://github.com/alan0x/typo/releases/download/v0.1.0/Typo_0.1.0_aarch64.dmg)
-  - Intel: [`Typo_0.1.0_x64.dmg`](https://github.com/alan0x/typo/releases/download/v0.1.0/Typo_0.1.0_x64.dmg)
+  - Apple Silicon: [`Typo_0.1.1_aarch64.dmg`](https://github.com/alan0x/typo/releases/download/v0.1.1/Typo_0.1.1_aarch64.dmg)
+  - Intel: [`Typo_0.1.1_x64.dmg`](https://github.com/alan0x/typo/releases/download/v0.1.1/Typo_0.1.1_x64.dmg)
 - **Windows**:
-  - Installer: [`Typo_0.1.0_x64-setup.exe`](https://github.com/alan0x/typo/releases/download/v0.1.0/Typo_0.1.0_x64-setup.exe)
-  - MSI: [`Typo_0.1.0_x64_en-US.msi`](https://github.com/alan0x/typo/releases/download/v0.1.0/Typo_0.1.0_x64_en-US.msi)
+  - Installer: [`Typo_0.1.1_x64-setup.exe`](https://github.com/alan0x/typo/releases/download/v0.1.1/Typo_0.1.1_x64-setup.exe)
+  - MSI: [`Typo_0.1.1_x64_en-US.msi`](https://github.com/alan0x/typo/releases/download/v0.1.1/Typo_0.1.1_x64_en-US.msi)
 
 ### 🍎 Note for macOS Users ("Typo is damaged and can't be opened")
 

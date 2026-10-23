@@ -1,6 +1,6 @@
 [package]
 name = "typo"
-version = "0.1.0"
+version = "0.1.1"
 description = "Typo - AI English Coach for Developers"
 authors = ["Typo Team"]
 edition = "2024"
