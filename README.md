@@ -121,7 +121,14 @@ Pre-built binaries for **v0.1.0** are available on [**GitHub Releases**](https:/
 Because Typo is an independent open-source project and not signed with a paid Apple Developer certificate, macOS Gatekeeper attaches a quarantine attribute to downloaded `.app` bundles, displaying:
 > *"Typo is damaged and can't be opened. You should move it to the Trash."*
 
-**The app is completely safe and undamaged.** To open it:
+**The app is completely safe and undamaged.** Choose either installation path:
+
+**Option A — .pkg installer (recommended, zero terminal commands)**
+1. Download `Typo_*_aarch64.pkg` (Apple Silicon) or `Typo_*_x64.pkg` (Intel).
+2. Double-click and follow the guided installer. If macOS blocks it, right-click the .pkg → **Open** → **Open Anyway**.
+3. The installer automatically removes the quarantine attribute — Typo is ready to launch from Spotlight.
+
+**Option B — .dmg disk image**
 1. Open the `.dmg` and drag **Typo.app** into your **Applications** folder.
 2. Open **Terminal** and run:
    ```bash

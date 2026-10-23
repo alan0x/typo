@@ -91,8 +91,9 @@ jobs:
 
           echo "Target Typo.app found at: $APP_PATH"
 
-          # 2. Ad-hoc sign the app bundle
-          codesign --force --deep --sign - "$APP_PATH" || true
+          # 2. Verify the app bundle signature (tauri.conf.json sets ad-hoc
+          #    signingIdentity "-", so the bundle must already be signed here)
+          codesign --verify --deep --strict "$APP_PATH"
 
           # 3. Create postinstall script to strip quarantine upon installation
           mkdir -p .pkg-scripts
@@ -107,20 +108,21 @@ jobs:
           EOF
           chmod +x .pkg-scripts/postinstall
 
-          # 4. Build .pkg installer
+          # 4. Build .pkg installer (version read from tauri.conf.json)
+          APP_VERSION=$(python3 -c "import json; print(json.load(open('src-tauri/tauri.conf.json'))['version'])")
           ARCH_NAME="${{ matrix.target == 'aarch64-apple-darwin' && 'aarch64' || 'x64' }}"
-          PKG_NAME="Typo_0.1.0_${ARCH_NAME}.pkg"
+          PKG_NAME="Typo_${APP_VERSION}_${ARCH_NAME}.pkg"
 
           pkgbuild --component "$APP_PATH" \
                    --install-location "/Applications" \
                    --scripts .pkg-scripts \
                    --identifier "com.typo.desktop" \
-                   --version "0.1.0" \
+                   --version "$APP_VERSION" \
                    "$PKG_NAME"
 
           echo "Built $PKG_NAME successfully!"
 
           # 5. Upload .pkg to GitHub Release
-          gh release upload v0.1.0 "$PKG_NAME" --clobber || gh release upload "${{ github.ref_name }}" "$PKG_NAME" --clobber || true
+          gh release upload "${{ github.ref_name }}" "$PKG_NAME" --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
