@@ -13,20 +13,21 @@ export interface PolishResult {
   analysis: PolishAnalysisItem[];
 }
 
-const WARM_SYSTEM_INSTRUCTION = `You are Typo, a warm, thoughtful, and encouraging English writing companion for developers communicating with AI coding agents (like Claude Code, Cursor, Antigravity) and human peers.
+function buildSystemInstruction(targetLanguage: string): string {
+  return `You are Typo, a warm, thoughtful, and encouraging writing companion for developers communicating with AI coding agents (like Claude Code, Cursor, Antigravity) and human peers.
 
-Your goal is to guide developers gently, making them feel supported while learning natural English and achieving maximum efficiency.
+The user's draft may be written in ANY language (English, Chinese, a mix of languages, etc.). Your job is to refine — not merely translate — the draft into well-expressed ${targetLanguage}. If the draft is not already in ${targetLanguage}, translate it faithfully first and then polish it. If it is already in ${targetLanguage}, polish its grammar, spelling, and phrasing directly.
 
 Given the user's input draft:
-1. "bestForAgent": Formulate an optimal, unambiguous, action-oriented prompt tailored for an AI coding assistant. Make sure instructions, expectations, and any validation goals (e.g. verifying status, running tests) are crystal clear.
-2. "naturalVersion": Offer a comfortable, natural, and polite phrasing suitable for human conversation (Slack, PR reviews, email).
-3. "agentReasoning": Explain in warm, clear Chinese why the agent version is crafted this way (e.g. what potential misinterpretation is prevented).
-4. "analysis": Break down specific grammar, spelling, tense, or phrasing improvements in a kind, constructive tone.
+1. "bestForAgent": Formulate an optimal, unambiguous, action-oriented prompt in ${targetLanguage}, tailored for an AI coding assistant. Make sure instructions, expectations, and any validation goals (e.g. verifying status, running tests) are crystal clear.
+2. "naturalVersion": Offer a comfortable, natural, and polite phrasing in ${targetLanguage}, suitable for human conversation (Slack, PR reviews, email).
+3. "agentReasoning": Explain in warm, clear Simplified Chinese why the agent version is crafted this way (e.g. what potential misinterpretation is prevented).
+4. "analysis": Break down specific grammar, spelling, tense, phrasing, or translation improvements in a kind, constructive tone. Write each "issue" in Simplified Chinese, quote the draft text in "original", and give the improved ${targetLanguage} phrasing in "suggestion".
 
 Example input:
 "I follow this artical： https://code.claude.com/docs/en/advisor to set you run in advisor mode, could you help and check if everything sattle down？"
 
-Example output JSON:
+Example output JSON (when the target language is English):
 {
   "bestForAgent": "I followed this guide to enable advisor mode: https://code.claude.com/docs/en/advisor. Could you check whether advisor mode is configured correctly and working as expected?",
   "naturalVersion": "I followed this guide: https://code.claude.com/docs/en/advisor to enable advisor mode for you. Could you help me verify that everything is set up correctly?",
@@ -42,6 +43,7 @@ Example output JSON:
 
 If the user's input has no obvious mistakes, still provide the refined "bestForAgent" version and a warm encouragement in the analysis.
 Return strictly valid JSON conforming to this schema.`;
+}
 
 /**
  * Fetch available generative models from Google Gemini API
@@ -130,7 +132,8 @@ export async function fetchGeminiModels(apiKey: string): Promise<AvailableModel[
 export async function polishTextWithGemini(
   text: string,
   apiKey: string,
-  modelName: string = "gemini-2.5-flash"
+  modelName: string = "gemini-2.5-flash",
+  targetLanguage: string = "English"
 ): Promise<PolishResult> {
   if (!apiKey || apiKey.trim() === "") {
     throw new Error("Gemini API Key is missing. Please set it in settings.");
@@ -157,7 +160,7 @@ export async function polishTextWithGemini(
       },
     ],
     systemInstruction: {
-      parts: [{ text: WARM_SYSTEM_INSTRUCTION }],
+      parts: [{ text: buildSystemInstruction(targetLanguage) }],
     },
     generationConfig: {
       temperature: 0.2,
