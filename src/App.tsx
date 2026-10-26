@@ -61,6 +61,9 @@ export function App() {
       : null
   );
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  // Text captured from the OS selection via the global hotkey. Its length is
+  // used by terminal-mode replace to delete the original draft before pasting.
+  const [grabbedText, setGrabbedText] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isDemo) {
@@ -74,6 +77,7 @@ export function App() {
       const grabbed = event.payload;
       if (grabbed && grabbed.trim()) {
         setInputText(grabbed.trim());
+        setGrabbedText(grabbed.trim());
         if (settings.apiKey) {
           handlePolish(grabbed.trim());
         }
@@ -95,6 +99,16 @@ export function App() {
         invoke("hide_window").catch(console.error);
       } else if (
         e.key === "Enter" &&
+        e.shiftKey &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        document.activeElement !== inputRef.current &&
+        result
+      ) {
+        e.preventDefault();
+        handleReplace(result.bestForAgent, true);
+      } else if (
+        e.key === "Enter" &&
         !e.shiftKey &&
         !e.ctrlKey &&
         !e.metaKey &&
@@ -111,7 +125,7 @@ export function App() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [result, inputText, settings.apiKey, settings.model, settings.targetLanguage]);
+  }, [result, inputText, grabbedText, settings.apiKey, settings.model, settings.targetLanguage]);
 
   const handlePolish = async (textToPolish?: string) => {
     const target = textToPolish !== undefined ? textToPolish : inputText;
@@ -136,9 +150,13 @@ export function App() {
     }
   };
 
-  const handleReplace = async (text: string) => {
+  const handleReplace = async (text: string, deleteOriginal = false) => {
     try {
-      await invoke("replace_selection", { text });
+      // Terminal mode: the source draft is deleted with Backspace before
+      // pasting, since terminal selections cannot be overwritten by paste.
+      const source = grabbedText ?? inputText;
+      const deleteChars = deleteOriginal ? [...source].length : 0;
+      await invoke("replace_selection", { text, deleteChars });
     } catch (err) {
       console.error("Replace failed:", err);
       await navigator.clipboard.writeText(text);

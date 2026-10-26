@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { PolishResult } from "../services/gemini";
-import { Check, CornerDownLeft, Copy, ArrowRight } from "lucide-react";
+import { Check, CornerDownLeft, Copy, ArrowRight, Terminal } from "lucide-react";
 
 interface ResultCardProps {
   result: PolishResult;
-  onReplace: (text: string) => void;
+  onReplace: (text: string, deleteOriginal?: boolean) => void;
 }
 
 export const ResultCard: React.FC<ResultCardProps> = ({ result, onReplace }) => {
@@ -59,6 +59,15 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onReplace }) => 
             >
               <span>Replace in editor</span>
               <CornerDownLeft className="w-2.5 h-2.5 text-stone-300" />
+            </button>
+
+            <button
+              onClick={() => onReplace(result.bestForAgent, true)}
+              title="Delete the original draft with Backspace, then paste. Use in terminals where selections cannot be overwritten."
+              className="px-2.5 py-1 text-[11px] font-sans font-medium text-stone-600 hover:text-stone-900 bg-white hover:bg-stone-100 border border-stone-300 active:scale-[0.98] rounded-md transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            >
+              <Terminal className="w-3 h-3" />
+              <span>⇧↵</span>
             </button>
           </div>
         </div>
