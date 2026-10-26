@@ -8,11 +8,22 @@ use tauri::{
 use tauri_plugin_clipboard_manager::ClipboardExt;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 
+// Hiding only the window leaves Typo as the active application, so simulated
+// keystrokes would be delivered to Typo itself instead of the previous app.
+// On macOS we hide the whole app (NSApp.hide) to return focus to it.
+fn hide_app(app: &tauri::AppHandle) {
+    #[cfg(target_os = "macos")]
+    let _ = app.hide();
+
+    #[cfg(not(target_os = "macos"))]
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.hide();
+    }
+}
+
 #[tauri::command]
 fn hide_window(app: tauri::AppHandle) -> Result<(), String> {
-    if let Some(window) = app.get_webview_window("main") {
-        window.hide().map_err(|e| e.to_string())?;
-    }
+    hide_app(&app);
     Ok(())
 }
 
@@ -34,10 +45,8 @@ fn replace_selection(app: tauri::AppHandle, text: String) -> Result<(), String> 
         .write_text(&text)
         .map_err(|e| format!("Clipboard error: {}", e))?;
 
-    // 2. Hide the Typo window so OS focus returns to the original window (IDE, terminal, browser, etc.)
-    if let Some(window) = app.get_webview_window("main") {
-        let _ = window.hide();
-    }
+    // 2. Hide Typo so OS focus returns to the original window (IDE, terminal, browser, etc.)
+    hide_app(&app);
 
     // 3. Wait in a background thread for the previous window to regain focus,
     //    then simulate Ctrl+V / Cmd+V on the main thread. enigo's macOS backend
@@ -56,6 +65,11 @@ fn replace_selection(app: tauri::AppHandle, text: String) -> Result<(), String> 
 }
 
 fn show_hud_window(app: &tauri::AppHandle, text: Option<&str>) {
+    // Unhide the app first: after a previous NSApp.hide(), showing a window
+    // alone may not reactivate Typo.
+    #[cfg(target_os = "macos")]
+    let _ = app.show();
+
     if let Some(window) = app.get_webview_window("main") {
         // Try positioning the window near the cursor
         if let Some((mut cur_x, mut cur_y)) = actions::get_cursor_location() {
