@@ -120,6 +120,18 @@ fn show_hud_window(app: &tauri::AppHandle, text: Option<&str>) {
     }
 }
 
+// Terminal mouse selections pad each visual line with trailing spaces up to
+// the window width, polluting the captured text. Right-trimming every line
+// removes that padding and is harmless for GUI text sources.
+fn sanitize_grabbed(text: &str) -> String {
+    text.lines()
+        .map(|line| line.trim_end())
+        .collect::<Vec<_>>()
+        .join("\n")
+        .trim()
+        .to_string()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -137,7 +149,12 @@ pub fn run() {
                         }
 
                         // Step 2: Read clipboard content
-                        let text = app.clipboard().read_text().ok();
+                        let text = app
+                            .clipboard()
+                            .read_text()
+                            .ok()
+                            .map(|t| sanitize_grabbed(&t))
+                            .filter(|t| !t.is_empty());
                         eprintln!(
                             "[typo] clipboard after copy: {:?}",
                             text.as_deref().map(|t| t.chars().take(60).collect::<String>())
