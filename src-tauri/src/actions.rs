@@ -74,6 +74,17 @@ mod win_impl {
             }
         }
     }
+
+    pub fn backspace(count: usize) -> Result<(), String> {
+        const VK_BACK: u8 = 0x08;
+        for _ in 0..count {
+            unsafe {
+                keybd_event(VK_BACK, 0, 0, 0);
+                keybd_event(VK_BACK, 0, KEYEVENTF_KEYUP, 0);
+            }
+        }
+        Ok(())
+    }
 }
 
 #[cfg(not(target_os = "windows"))]
@@ -108,6 +119,41 @@ mod unix_impl {
         let enigo = Enigo::new(&Settings::default()).ok()?;
         enigo.location().ok()
     }
+
+    pub fn backspace(count: usize) -> Result<(), String> {
+        let mut enigo = Enigo::new(&Settings::default()).map_err(|e| format!("{:?}", e))?;
+        for _ in 0..count {
+            enigo.key(Key::Backspace, Direction::Click).map_err(|e| format!("{:?}", e))?;
+        }
+        Ok(())
+    }
+}
+
+#[cfg(target_os = "macos")]
+pub mod accessibility {
+    use core_foundation::base::TCFType;
+    use core_foundation::boolean::CFBoolean;
+    use core_foundation::dictionary::CFDictionary;
+    use core_foundation::string::CFString;
+
+    #[link(name = "ApplicationServices", kind = "framework")]
+    unsafe extern "C" {
+        fn AXIsProcessTrustedWithOptions(options: core_foundation::dictionary::CFDictionaryRef) -> bool;
+    }
+
+    /// Whether the process may control the computer (Accessibility permission).
+    /// With `prompt = true`, macOS shows the system authorization dialog and
+    /// adds the app to the Accessibility list when it is not trusted yet.
+    pub fn is_trusted(prompt: bool) -> bool {
+        let key = CFString::new("AXTrustedCheckOptionPrompt");
+        let value = if prompt {
+            CFBoolean::true_value()
+        } else {
+            CFBoolean::false_value()
+        };
+        let options = CFDictionary::from_CFType_pairs(&[(key.as_CFType(), value.as_CFType())]);
+        unsafe { AXIsProcessTrustedWithOptions(options.as_concrete_TypeRef()) }
+    }
 }
 
 pub fn copy_selection() -> Result<(), String> {
@@ -132,4 +178,12 @@ pub fn get_cursor_location() -> Option<(i32, i32)> {
 
     #[cfg(not(target_os = "windows"))]
     return unix_impl::get_cursor_location();
+}
+
+pub fn backspace(count: usize) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    return win_impl::backspace(count);
+
+    #[cfg(not(target_os = "windows"))]
+    return unix_impl::backspace(count);
 }

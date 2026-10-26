@@ -39,7 +39,7 @@ fn start_dragging(window: tauri::WebviewWindow) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn replace_selection(app: tauri::AppHandle, text: String) -> Result<(), String> {
+fn replace_selection(app: tauri::AppHandle, text: String, delete_chars: Option<usize>) -> Result<(), String> {
     // 1. Write the polished text to the clipboard
     app.clipboard()
         .write_text(&text)
@@ -49,14 +49,23 @@ fn replace_selection(app: tauri::AppHandle, text: String) -> Result<(), String> 
     hide_app(&app);
 
     // 3. Wait in a background thread for the previous window to regain focus,
-    //    then simulate Ctrl+V / Cmd+V on the main thread. enigo's macOS backend
+    //    then simulate keystrokes on the main thread. enigo's macOS backend
     //    calls Carbon TIS APIs which assert the main dispatch queue, so doing
     //    the key simulation off the main thread crashes the app.
     std::thread::spawn(move || {
         std::thread::sleep(std::time::Duration::from_millis(120));
         let _ = app.run_on_main_thread(move || {
+            // Terminal screens expose no editable selection, so pasting can
+            // never overwrite highlighted text there. Callers pass the length
+            // of the original draft so we can delete it with Backspace first,
+            // which works because the TUI cursor sits right after the draft.
+            if let Some(n) = delete_chars.filter(|n| *n > 0) {
+                if let Err(e) = actions::backspace(n) {
+                    eprintln!("[typo] failed to delete original text: {}", e);
+                }
+            }
             if let Err(e) = actions::paste_selection() {
-                eprintln!("Failed to paste selection: {}", e);
+                eprintln!("[typo] failed to paste selection: {}", e);
             }
         });
     });
@@ -102,7 +111,10 @@ fn show_hud_window(app: &tauri::AppHandle, text: Option<&str>) {
 
         // Emit text to front-end if provided
         if let Some(content) = text {
+            eprintln!("[typo] emit trigger-polish ({} chars)", content.len());
             let _ = window.emit("trigger-polish", content);
+        } else {
+            eprintln!("[typo] no text to emit");
         }
     }
 }
@@ -116,12 +128,19 @@ pub fn run() {
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(move |app, _shortcut, event| {
                     if event.state() == ShortcutState::Pressed {
-                        // User pressed global shortcut!
+                        eprintln!("[typo] hotkey pressed");
                         // Step 1: try to copy currently selected text
-                        let _ = actions::copy_selection();
+                        match actions::copy_selection() {
+                            Ok(_) => eprintln!("[typo] copy_selection ok"),
+                            Err(e) => eprintln!("[typo] copy_selection error: {}", e),
+                        }
 
                         // Step 2: Read clipboard content
                         let text = app.clipboard().read_text().ok();
+                        eprintln!(
+                            "[typo] clipboard after copy: {:?}",
+                            text.as_deref().map(|t| t.chars().take(60).collect::<String>())
+                        );
 
                         // Step 3: Show HUD window near cursor and emit event
                         show_hud_window(app, text.as_deref());
@@ -130,6 +149,14 @@ pub fn run() {
                 .build(),
         )
         .setup(|app| {
+            // Simulated keystrokes (Cmd+C / Cmd+V) require Accessibility
+            // permission; ask for it up front instead of failing silently.
+            #[cfg(target_os = "macos")]
+            {
+                let trusted = actions::accessibility::is_trusted(true);
+                eprintln!("[typo] accessibility trusted: {}", trusted);
+            }
+
             // Setup system tray menu
             let show_item = MenuItem::with_id(app, "show", "Show Typo (Alt+Shift+E)", true, None::<&str>)?;
             let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
