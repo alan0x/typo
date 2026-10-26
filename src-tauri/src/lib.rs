@@ -39,7 +39,7 @@ fn start_dragging(window: tauri::WebviewWindow) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn replace_selection(app: tauri::AppHandle, text: String, delete_chars: Option<usize>) -> Result<(), String> {
+fn replace_selection(app: tauri::AppHandle, text: String, clear_first: Option<bool>) -> Result<(), String> {
     // 1. Write the polished text to the clipboard
     app.clipboard()
         .write_text(&text)
@@ -56,13 +56,14 @@ fn replace_selection(app: tauri::AppHandle, text: String, delete_chars: Option<u
         std::thread::sleep(std::time::Duration::from_millis(120));
         let _ = app.run_on_main_thread(move || {
             // Terminal screens expose no editable selection, so pasting can
-            // never overwrite highlighted text there. Callers pass the length
-            // of the original draft so we can delete it with Backspace first,
-            // which works because the TUI cursor sits right after the draft.
-            if let Some(n) = delete_chars.filter(|n| *n > 0) {
-                if let Err(e) = actions::backspace(n) {
-                    eprintln!("[typo] failed to delete original text: {}", e);
+            // never overwrite highlighted text there. For TUIs like Kimi Code
+            // where Ctrl+C clears the input box when idle, clearing first
+            // turns the paste into a true replace.
+            if clear_first.unwrap_or(false) {
+                if let Err(e) = actions::send_ctrl_c() {
+                    eprintln!("[typo] failed to clear input box: {}", e);
                 }
+                std::thread::sleep(std::time::Duration::from_millis(30));
             }
             if let Err(e) = actions::paste_selection() {
                 eprintln!("[typo] failed to paste selection: {}", e);

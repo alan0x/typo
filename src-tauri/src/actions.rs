@@ -75,13 +75,14 @@ mod win_impl {
         }
     }
 
-    pub fn backspace(count: usize) -> Result<(), String> {
-        const VK_BACK: u8 = 0x08;
-        for _ in 0..count {
-            unsafe {
-                keybd_event(VK_BACK, 0, 0, 0);
-                keybd_event(VK_BACK, 0, KEYEVENTF_KEYUP, 0);
-            }
+    pub fn send_ctrl_c() -> Result<(), String> {
+        unsafe {
+            keybd_event(VK_CONTROL, 0, 0, 0);
+            thread::sleep(Duration::from_millis(15));
+            keybd_event(VK_C, 0, 0, 0);
+            thread::sleep(Duration::from_millis(25));
+            keybd_event(VK_C, 0, KEYEVENTF_KEYUP, 0);
+            keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
         }
         Ok(())
     }
@@ -120,11 +121,13 @@ mod unix_impl {
         enigo.location().ok()
     }
 
-    pub fn backspace(count: usize) -> Result<(), String> {
+    pub fn send_ctrl_c() -> Result<(), String> {
         let mut enigo = Enigo::new(&Settings::default()).map_err(|e| format!("{:?}", e))?;
-        for _ in 0..count {
-            enigo.key(Key::Backspace, Direction::Click).map_err(|e| format!("{:?}", e))?;
-        }
+
+        enigo.key(Key::Control, Direction::Press).map_err(|e| format!("{:?}", e))?;
+        enigo.key(Key::Unicode('c'), Direction::Click).map_err(|e| format!("{:?}", e))?;
+        enigo.key(Key::Control, Direction::Release).map_err(|e| format!("{:?}", e))?;
+
         Ok(())
     }
 }
@@ -180,10 +183,10 @@ pub fn get_cursor_location() -> Option<(i32, i32)> {
     return unix_impl::get_cursor_location();
 }
 
-pub fn backspace(count: usize) -> Result<(), String> {
+pub fn send_ctrl_c() -> Result<(), String> {
     #[cfg(target_os = "windows")]
-    return win_impl::backspace(count);
+    return win_impl::send_ctrl_c();
 
     #[cfg(not(target_os = "windows"))]
-    return unix_impl::backspace(count);
+    return unix_impl::send_ctrl_c();
 }
