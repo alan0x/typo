@@ -13,9 +13,23 @@ export interface AppSettings {
   autoReplaceOnEnter: boolean;
   autoPolishOnTrigger: boolean;
   hotkey: string;
+  targetLanguage: string;
 }
 
 const STORAGE_KEY = "typo_settings_v2";
+
+export const TARGET_LANGUAGES: string[] = [
+  "English",
+  "中文（简体）",
+  "中文（繁体）",
+  "日本語",
+  "한국어",
+  "Français",
+  "Deutsch",
+  "Español",
+  "Português",
+  "Русский",
+];
 
 export const DEFAULT_MODELS: AvailableModel[] = [
   {
@@ -47,6 +61,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   autoReplaceOnEnter: true,
   autoPolishOnTrigger: true,
   hotkey: DEFAULT_SUMMON_LABEL,
+  targetLanguage: "English",
 };
 
 export function loadSettings(): AppSettings {
