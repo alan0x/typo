@@ -61,12 +61,12 @@ fn replace_selection(app: tauri::AppHandle, text: String, clear_first: Option<bo
             // turns the paste into a true replace.
             if clear_first.unwrap_or(false) {
                 if let Err(e) = actions::send_ctrl_c() {
-                    eprintln!("[typo] failed to clear input box: {}", e);
+                    eprintln!("Failed to clear input box: {}", e);
                 }
                 std::thread::sleep(std::time::Duration::from_millis(30));
             }
             if let Err(e) = actions::paste_selection() {
-                eprintln!("[typo] failed to paste selection: {}", e);
+                eprintln!("Failed to paste selection: {}", e);
             }
         });
     });
@@ -112,10 +112,7 @@ fn show_hud_window(app: &tauri::AppHandle, text: Option<&str>) {
 
         // Emit text to front-end if provided
         if let Some(content) = text {
-            eprintln!("[typo] emit trigger-polish ({} chars)", content.len());
             let _ = window.emit("trigger-polish", content);
-        } else {
-            eprintln!("[typo] no text to emit");
         }
     }
 }
@@ -181,12 +178,10 @@ pub fn run() {
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(move |app, _shortcut, event| {
                     if event.state() == ShortcutState::Pressed {
-                        eprintln!("[typo] hotkey pressed");
                         // Step 1: try to copy currently selected text
                         let before = app.clipboard().read_text().ok();
-                        match actions::copy_selection() {
-                            Ok(_) => eprintln!("[typo] copy_selection ok"),
-                            Err(e) => eprintln!("[typo] copy_selection error: {}", e),
+                        if let Err(e) = actions::copy_selection() {
+                            eprintln!("Failed to copy selection: {}", e);
                         }
                         let mut grabbed = app.clipboard().read_text().ok();
 
@@ -200,10 +195,7 @@ pub fn run() {
                             #[cfg(not(target_os = "macos"))]
                             let is_terminal = false;
 
-                            if is_terminal {
-                                eprintln!("[typo] frontmost app is a terminal; skipping select-all grab");
-                            } else {
-                                eprintln!("[typo] no selection detected, trying select-all grab");
+                            if !is_terminal {
                                 let _ = actions::select_all();
                                 let _ = actions::copy_selection();
                                 let grabbed_all = app.clipboard().read_text().ok();
@@ -213,16 +205,10 @@ pub fn run() {
                             }
                         }
 
-                        // Step 3: clean up and emit
+                        // Step 3: clean up and show the HUD near the cursor
                         let text = grabbed
                             .map(|t| sanitize_grabbed(&t))
                             .filter(|t| !t.is_empty());
-                        eprintln!(
-                            "[typo] captured text: {:?}",
-                            text.as_deref().map(|t| t.chars().take(60).collect::<String>())
-                        );
-
-                        // Step 4: Show HUD window near cursor and emit event
                         show_hud_window(app, text.as_deref());
                     }
                 })
@@ -232,10 +218,7 @@ pub fn run() {
             // Simulated keystrokes (Cmd+C / Cmd+V) require Accessibility
             // permission; ask for it up front instead of failing silently.
             #[cfg(target_os = "macos")]
-            {
-                let trusted = actions::accessibility::is_trusted(true);
-                eprintln!("[typo] accessibility trusted: {}", trusted);
-            }
+            let _ = actions::accessibility::is_trusted(true);
 
             // Setup system tray menu
             let show_item = MenuItem::with_id(app, "show", "Show Typo (Alt+Shift+E)", true, None::<&str>)?;
