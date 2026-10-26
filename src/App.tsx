@@ -85,7 +85,7 @@ export function App() {
     return () => {
       unlistenPromise.then((unlisten) => unlisten());
     };
-  }, [settings.apiKey, settings.model]);
+  }, [settings.apiKey, settings.model, settings.targetLanguage]);
 
   // Window-level key controls
   useEffect(() => {
@@ -111,7 +111,7 @@ export function App() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [result, inputText]);
+  }, [result, inputText, settings.apiKey, settings.model, settings.targetLanguage]);
 
   const handlePolish = async (textToPolish?: string) => {
     const target = textToPolish !== undefined ? textToPolish : inputText;
@@ -126,7 +126,7 @@ export function App() {
     setError(null);
 
     try {
-      const data = await polishTextWithGemini(target, settings.apiKey, settings.model);
+      const data = await polishTextWithGemini(target, settings.apiKey, settings.model, settings.targetLanguage);
       setResult(data);
     } catch (err: any) {
       console.error("Polishing error:", err);
@@ -199,7 +199,7 @@ export function App() {
             rows={2}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder={`Type your draft in English, or press ${settings.hotkey} on selected text in any app...`}
+            placeholder={`Type your draft in any language, or press ${settings.hotkey} on selected text in any app...`}
             className="w-full bg-transparent resize-none outline-none text-[12px] text-stone-900 placeholder-stone-400 font-sans leading-relaxed selectable-text"
           />
 
