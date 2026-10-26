@@ -132,6 +132,46 @@ fn sanitize_grabbed(text: &str) -> String {
         .to_string()
 }
 
+// In a terminal, Cmd+A selects the whole screen rather than an input field,
+// so the select-all grab fallback would capture scrollback junk. lsappinfo
+// reports the frontmost app's bundle id without any special permission.
+#[cfg(target_os = "macos")]
+fn frontmost_is_terminal() -> bool {
+    let asn = std::process::Command::new("lsappinfo")
+        .arg("front")
+        .output()
+        .ok()
+        .filter(|o| o.status.success())
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string());
+    let Some(asn) = asn.filter(|a| !a.is_empty()) else {
+        return false;
+    };
+
+    let info = std::process::Command::new("lsappinfo")
+        .args(["info", "-only", "bundleID", &asn])
+        .output()
+        .ok()
+        .filter(|o| o.status.success())
+        .map(|o| String::from_utf8_lossy(&o.stdout).to_string());
+    let Some(info) = info else {
+        return false;
+    };
+
+    const TERMINALS: &[&str] = &[
+        "com.apple.Terminal",
+        "com.googlecode.iterm2",
+        "dev.warp.Warp-Stable",
+        "com.mitchellh.ghostty",
+        "org.alacritty",
+        "net.kovidgoyal.kitty",
+        "com.github.wez.wezterm",
+        "co.zeit.hyper",
+    ];
+    TERMINALS
+        .iter()
+        .any(|t| info.contains(&format!("bundleID=\"{}\"", t)))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -152,16 +192,24 @@ pub fn run() {
 
                         // Step 2: clipboard unchanged means there is no
                         // selection; fall back to grabbing the whole focused
-                        // field with Cmd/Ctrl+A + Cmd/Ctrl+C. In a terminal
-                        // this selects the screen, so it may capture scrollback
-                        // junk — a known limitation of screen-based selection.
+                        // field with Cmd/Ctrl+A + Cmd/Ctrl+C. Skipped for
+                        // terminals, where Cmd+A selects the screen.
                         if grabbed == before {
-                            eprintln!("[typo] no selection detected, trying select-all grab");
-                            let _ = actions::select_all();
-                            let _ = actions::copy_selection();
-                            let grabbed_all = app.clipboard().read_text().ok();
-                            if grabbed_all != before {
-                                grabbed = grabbed_all;
+                            #[cfg(target_os = "macos")]
+                            let is_terminal = frontmost_is_terminal();
+                            #[cfg(not(target_os = "macos"))]
+                            let is_terminal = false;
+
+                            if is_terminal {
+                                eprintln!("[typo] frontmost app is a terminal; skipping select-all grab");
+                            } else {
+                                eprintln!("[typo] no selection detected, trying select-all grab");
+                                let _ = actions::select_all();
+                                let _ = actions::copy_selection();
+                                let grabbed_all = app.clipboard().read_text().ok();
+                                if grabbed_all != before {
+                                    grabbed = grabbed_all;
+                                }
                             }
                         }
 
