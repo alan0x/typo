@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AppSettings, AvailableModel } from "../services/storage";
+import { AppSettings, AvailableModel, TARGET_LANGUAGES } from "../services/storage";
 import { Eye, EyeOff, X, ExternalLink, RefreshCw, AlertCircle, Check } from "lucide-react";
 import { fetchGeminiModels } from "../services/gemini";
 
@@ -217,6 +217,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </p>
               ) : null;
             })()}
+          </div>
+
+          {/* Target Language */}
+          <div className="space-y-1.5 pt-1">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-medium text-stone-700 tracking-wide uppercase">
+                Target Language
+              </label>
+            </div>
+
+            <select
+              value={formData.targetLanguage}
+              onChange={(e) => setFormData({ ...formData, targetLanguage: e.target.value })}
+              className="w-full px-2.5 py-1.5 bg-white border border-stone-300 rounded-md text-stone-900 font-sans text-[11px] focus:outline-none focus:border-stone-800 transition-colors"
+            >
+              {TARGET_LANGUAGES.map((lang) => (
+                <option key={lang} value={lang}>
+                  {lang}
+                </option>
+              ))}
+            </select>
+
+            <p className="text-[10px] text-stone-500 leading-normal font-sans">
+              Drafts in any language are refined into well-expressed {formData.targetLanguage}.
+            </p>
           </div>
 
           {/* Hotkey notice */}
