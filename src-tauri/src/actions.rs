@@ -47,9 +47,6 @@ mod win_impl {
     }
 
     pub fn paste_selection() -> Result<(), String> {
-        // Wait for the previous window to regain OS focus after Typo hides
-        thread::sleep(Duration::from_millis(120));
-
         unsafe {
             // Ensure modifiers are released
             keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
@@ -97,7 +94,6 @@ mod unix_impl {
     }
 
     pub fn paste_selection() -> Result<(), String> {
-        thread::sleep(Duration::from_millis(120));
         let mut enigo = Enigo::new(&Settings::default()).map_err(|e| format!("{:?}", e))?;
         let modifier = Key::Meta;
 

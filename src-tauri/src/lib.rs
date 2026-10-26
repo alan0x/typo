@@ -39,11 +39,17 @@ fn replace_selection(app: tauri::AppHandle, text: String) -> Result<(), String> 
         let _ = window.hide();
     }
 
-    // 3. Simulate Ctrl+V / Cmd+V in a background thread
+    // 3. Wait in a background thread for the previous window to regain focus,
+    //    then simulate Ctrl+V / Cmd+V on the main thread. enigo's macOS backend
+    //    calls Carbon TIS APIs which assert the main dispatch queue, so doing
+    //    the key simulation off the main thread crashes the app.
     std::thread::spawn(move || {
-        if let Err(e) = actions::paste_selection() {
-            eprintln!("Failed to paste selection: {}", e);
-        }
+        std::thread::sleep(std::time::Duration::from_millis(120));
+        let _ = app.run_on_main_thread(move || {
+            if let Err(e) = actions::paste_selection() {
+                eprintln!("Failed to paste selection: {}", e);
+            }
+        });
     });
 
     Ok(())
