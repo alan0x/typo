@@ -143,24 +143,38 @@ pub fn run() {
                     if event.state() == ShortcutState::Pressed {
                         eprintln!("[typo] hotkey pressed");
                         // Step 1: try to copy currently selected text
+                        let before = app.clipboard().read_text().ok();
                         match actions::copy_selection() {
                             Ok(_) => eprintln!("[typo] copy_selection ok"),
                             Err(e) => eprintln!("[typo] copy_selection error: {}", e),
                         }
+                        let mut grabbed = app.clipboard().read_text().ok();
 
-                        // Step 2: Read clipboard content
-                        let text = app
-                            .clipboard()
-                            .read_text()
-                            .ok()
+                        // Step 2: clipboard unchanged means there is no
+                        // selection; fall back to grabbing the whole focused
+                        // field with Cmd/Ctrl+A + Cmd/Ctrl+C. In a terminal
+                        // this selects the screen, so it may capture scrollback
+                        // junk — a known limitation of screen-based selection.
+                        if grabbed == before {
+                            eprintln!("[typo] no selection detected, trying select-all grab");
+                            let _ = actions::select_all();
+                            let _ = actions::copy_selection();
+                            let grabbed_all = app.clipboard().read_text().ok();
+                            if grabbed_all != before {
+                                grabbed = grabbed_all;
+                            }
+                        }
+
+                        // Step 3: clean up and emit
+                        let text = grabbed
                             .map(|t| sanitize_grabbed(&t))
                             .filter(|t| !t.is_empty());
                         eprintln!(
-                            "[typo] clipboard after copy: {:?}",
+                            "[typo] captured text: {:?}",
                             text.as_deref().map(|t| t.chars().take(60).collect::<String>())
                         );
 
-                        // Step 3: Show HUD window near cursor and emit event
+                        // Step 4: Show HUD window near cursor and emit event
                         show_hud_window(app, text.as_deref());
                     }
                 })

@@ -21,6 +21,7 @@ mod win_impl {
     const VK_SHIFT: u8 = 0x10;
     const VK_CONTROL: u8 = 0x11;
     const VK_MENU: u8 = 0x12; // Alt key
+    const VK_A: u8 = 0x41;
     const VK_C: u8 = 0x43;
     const VK_V: u8 = 0x56;
 
@@ -64,6 +65,23 @@ mod win_impl {
         Ok(())
     }
 
+    pub fn select_all() -> Result<(), String> {
+        unsafe {
+            keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
+            keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
+            thread::sleep(Duration::from_millis(15));
+
+            // Press Ctrl + A
+            keybd_event(VK_CONTROL, 0, 0, 0);
+            thread::sleep(Duration::from_millis(15));
+            keybd_event(VK_A, 0, 0, 0);
+            thread::sleep(Duration::from_millis(25));
+            keybd_event(VK_A, 0, KEYEVENTF_KEYUP, 0);
+            keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
+        }
+        Ok(())
+    }
+
     pub fn get_cursor_location() -> Option<(i32, i32)> {
         let mut pt = POINT { x: 0, y: 0 };
         unsafe {
@@ -102,6 +120,18 @@ mod unix_impl {
         enigo.key(modifier, Direction::Release).map_err(|e| format!("{:?}", e))?;
 
         thread::sleep(Duration::from_millis(100));
+        Ok(())
+    }
+
+    pub fn select_all() -> Result<(), String> {
+        let mut enigo = Enigo::new(&Settings::default()).map_err(|e| format!("{:?}", e))?;
+        let modifier = Key::Meta;
+
+        enigo.key(modifier, Direction::Press).map_err(|e| format!("{:?}", e))?;
+        enigo.key(Key::Unicode('a'), Direction::Click).map_err(|e| format!("{:?}", e))?;
+        enigo.key(modifier, Direction::Release).map_err(|e| format!("{:?}", e))?;
+
+        thread::sleep(Duration::from_millis(30));
         Ok(())
     }
 
@@ -165,6 +195,14 @@ pub fn copy_selection() -> Result<(), String> {
 
     #[cfg(not(target_os = "windows"))]
     return unix_impl::copy_selection();
+}
+
+pub fn select_all() -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    return win_impl::select_all();
+
+    #[cfg(not(target_os = "windows"))]
+    return unix_impl::select_all();
 }
 
 pub fn paste_selection() -> Result<(), String> {

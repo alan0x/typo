@@ -287,7 +287,7 @@ export function App() {
               "The limits of my language mean the limits of my world."
             </p>
             <p className="text-[11px] text-stone-500 mt-2.5 max-w-xs leading-normal font-sans">
-              Select text anywhere and press{" "}
+              Select text — or just place the cursor in a text field — and press{" "}
               <kbd className="font-mono text-stone-700 bg-stone-200/80 border border-stone-300/80 px-1.5 py-0.5 rounded text-[10px] shadow-2xs font-medium">
                 {settings.hotkey}
               </kbd>
