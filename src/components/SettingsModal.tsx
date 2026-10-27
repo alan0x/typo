@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { AppSettings, AvailableModel, TARGET_LANGUAGES } from "../services/storage";
-import { Eye, EyeOff, X, ExternalLink, RefreshCw, AlertCircle, Check } from "lucide-react";
+import { Eye, EyeOff, X, ExternalLink, RefreshCw, AlertCircle, Check, FolderOpen } from "lucide-react";
 import { fetchGeminiModels } from "../services/gemini";
+import { getDefaultNotesDir, pickNotesDir } from "../services/notes";
 
 interface SettingsModalProps {
   settings: AppSettings;
@@ -24,8 +25,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     type: "success" | "error" | "info";
     text: string;
   } | null>(null);
+  const [defaultNotesDir, setDefaultNotesDir] = useState("");
+
+  useEffect(() => {
+    if (isOpen) {
+      getDefaultNotesDir().then(setDefaultNotesDir).catch(() => setDefaultNotesDir(""));
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const handlePickNotesDir = async () => {
+    try {
+      const selected = await pickNotesDir(formData.notesDir || defaultNotesDir || undefined);
+      if (selected) {
+        setFormData((prev) => ({ ...prev, notesDir: selected }));
+      }
+    } catch (err) {
+      console.error("Folder picker failed:", err);
+    }
+  };
 
   const handleTestAndFetch = async () => {
     if (!formData.apiKey.trim()) {
@@ -242,6 +261,45 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <p className="text-[10px] text-stone-500 leading-normal font-sans">
               Drafts in any language are refined into well-expressed {formData.targetLanguage}.
             </p>
+          </div>
+
+          {/* Mistake Notebook Location */}
+          <div className="space-y-1.5 pt-1">
+            <label className="text-[11px] font-medium text-stone-700 tracking-wide uppercase">
+              Mistake Notebook Folder
+            </label>
+
+            <div className="flex items-center gap-1.5">
+              <input
+                type="text"
+                readOnly
+                value={formData.notesDir || defaultNotesDir}
+                placeholder={defaultNotesDir || "~/.typo"}
+                className="flex-1 min-w-0 px-3 py-1.5 bg-stone-50 border border-stone-300 rounded-md font-mono text-[10px] text-stone-700 truncate focus:outline-none"
+                title={formData.notesDir || defaultNotesDir}
+              />
+              <button
+                onClick={handlePickNotesDir}
+                className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 bg-white hover:bg-stone-100 border border-stone-300 rounded-md text-[10px] text-stone-700 transition-colors cursor-pointer"
+              >
+                <FolderOpen className="w-3 h-3" />
+                <span>Choose…</span>
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] text-stone-400">
+                Saved mistakes are appended to notebook.md in this folder.
+              </p>
+              {formData.notesDir && (
+                <button
+                  onClick={() => setFormData((prev) => ({ ...prev, notesDir: "" }))}
+                  className="shrink-0 text-[10px] text-stone-500 hover:text-stone-900 underline transition-colors cursor-pointer"
+                >
+                  Reset to default
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Hotkey notice */}

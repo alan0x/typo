@@ -72,6 +72,7 @@ Bring Your Own Key directly from Google AI Studio. Typo automatically queries th
 - **⚡ Native Text Capture**: Automatically grabs selected text upon hotkey trigger without manual `Ctrl+C`.
 - **🖐️ Full Titlebar Dragging**: Smooth, native window movement anywhere across the top bar.
 - **🤖 Dynamic Model Routing**: Query and switch between `gemini-2.5-flash`, `gemini-2.5-pro`, and any available generative model.
+- **📓 Mistake Notebook**: Save proofreading notes to a local Markdown notebook (`~/.typo/notebook.md`, customizable) with one click — auto-categorized on save, reviewable anytime in-app, with optional AI reorganization (dedupe & regroup, always backed up first).
 - **🌿 Quiet Craftsmanship**: Warm linen canvas (`#f7f6f2`), quiet typography, and zero flashy gimmicks.
 - **🪶 Ultra-Low Footprint**: Powered by **Tauri 2.0 (Rust) + React 19 + Tailwind CSS**, consuming only ~30MB of RAM.
 
@@ -168,7 +169,8 @@ pnpm tauri dev
 
 ## 🗺️ Roadmap
 
-- [ ] **Flashcards & Mistake Notebook**: Periodically review your most common slips (spelling, tenses).
+- [x] **Mistake Notebook**: One-click save of proofreading notes into an auto-categorized local Markdown notebook, with optional AI reorganization.
+- [ ] **Flashcards**: Periodically review your most common slips (spelling, tenses).
 - [ ] **TTS Pronunciation**: Listen to natural speech synthesis for verified sentences.
 - [ ] **Multi-Provider Support**: Anthropic Claude, OpenAI, DeepSeek, and local Ollama.
 

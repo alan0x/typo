@@ -14,6 +14,7 @@ export interface AppSettings {
   autoPolishOnTrigger: boolean;
   hotkey: string;
   targetLanguage: string;
+  notesDir: string;
 }
 
 const STORAGE_KEY = "typo_settings_v2";
@@ -62,6 +63,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   autoPolishOnTrigger: true,
   hotkey: DEFAULT_SUMMON_LABEL,
   targetLanguage: "English",
+  notesDir: "",
 };
 
 export function loadSettings(): AppSettings {

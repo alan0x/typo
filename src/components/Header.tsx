@@ -1,14 +1,15 @@
 import React from "react";
-import { SlidersHorizontal, X } from "lucide-react";
+import { BookOpen, SlidersHorizontal, X } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 interface HeaderProps {
   hotkey: string;
   onOpenSettings: () => void;
+  onOpenNotebook: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ hotkey, onOpenSettings }) => {
+export const Header: React.FC<HeaderProps> = ({ hotkey, onOpenSettings, onOpenNotebook }) => {
   const handleClose = () => {
     invoke("hide_window").catch((err) => console.error("Failed to hide window", err));
   };
@@ -84,6 +85,14 @@ export const Header: React.FC<HeaderProps> = ({ hotkey, onOpenSettings }) => {
         </span>
 
         <span className="w-px h-3.5 bg-stone-300/70 hidden sm:inline-block" />
+
+        <button
+          onClick={onOpenNotebook}
+          title="Mistake Notebook"
+          className="titlebar-no-drag p-1.5 text-stone-500 hover:text-stone-900 hover:bg-stone-200/60 rounded-md transition-colors cursor-pointer"
+        >
+          <BookOpen className="w-3.5 h-3.5" />
+        </button>
 
         <button
           onClick={onOpenSettings}

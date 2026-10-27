@@ -2,8 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { Header } from "./components/Header";
 import { SettingsModal } from "./components/SettingsModal";
 import { ResultCard } from "./components/ResultCard";
+import { NotebookModal } from "./components/NotebookModal";
 import { loadSettings, saveSettings, AppSettings } from "./services/storage";
-import { polishTextWithGemini, PolishResult } from "./services/gemini";
+import { polishTextWithGemini, PolishAnalysisItem, PolishResult } from "./services/gemini";
+import { appendEntries } from "./services/notes";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { Loader2, RefreshCw } from "lucide-react";
@@ -21,6 +23,7 @@ export function App() {
     return loaded;
   });
   const [isSettingsOpen, setIsSettingsOpen] = useState(searchParams?.get("modal") === "settings");
+  const [isNotebookOpen, setIsNotebookOpen] = useState(false);
   const [inputText, setInputText] = useState(
     isDemo ? "I follow this artical to set you run in advisor mode, could you help and check if everything sattle down?" : ""
   );
@@ -163,11 +166,33 @@ export function App() {
     saveSettings(newSettings);
   };
 
+  const handleSaveNote = async (item: PolishAnalysisItem): Promise<boolean> => {
+    try {
+      await appendEntries([item], settings.notesDir || undefined);
+      return true;
+    } catch (err) {
+      console.error("Failed to save note:", err);
+      return false;
+    }
+  };
+
+  const handleSaveAllNotes = async (): Promise<boolean> => {
+    if (!result?.analysis?.length) return false;
+    try {
+      await appendEntries(result.analysis, settings.notesDir || undefined);
+      return true;
+    } catch (err) {
+      console.error("Failed to save notes:", err);
+      return false;
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen w-screen bg-[#f7f6f2] border border-stone-300 rounded-xl shadow-2xl text-stone-900 overflow-hidden font-sans">
       <Header
         hotkey={settings.hotkey}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenNotebook={() => setIsNotebookOpen(true)}
       />
 
       <main className="flex-1 flex flex-col p-4 space-y-3.5 overflow-y-auto">
@@ -270,7 +295,13 @@ export function App() {
 
         {/* Output */}
         {!loading && result && (
-          <ResultCard result={result} onReplace={handleReplace} />
+          <ResultCard
+            key={result.bestForAgent}
+            result={result}
+            onReplace={handleReplace}
+            onSaveNote={handleSaveNote}
+            onSaveAllNotes={handleSaveAllNotes}
+          />
         )}
 
         {/* Quiet Empty State with Prominent Brand Mark */}
@@ -301,6 +332,14 @@ export function App() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         onSave={handleSaveSettings}
+      />
+
+      <NotebookModal
+        isOpen={isNotebookOpen}
+        onClose={() => setIsNotebookOpen(false)}
+        notesDir={settings.notesDir}
+        apiKey={settings.apiKey}
+        model={settings.model}
       />
     </div>
   );

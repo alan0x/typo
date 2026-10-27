@@ -6,6 +6,8 @@
   "permissions": [
     "core:default",
     "opener:default",
+    "opener:allow-open-path",
+    "dialog:allow-open",
     "core:window:allow-start-dragging"
   ]
 }

@@ -1,9 +1,27 @@
 import { AvailableModel } from "./storage";
 
+export type NoteCategory =
+  | "spelling"
+  | "grammar"
+  | "tense"
+  | "phrasing"
+  | "punctuation"
+  | "other";
+
+export const NOTE_CATEGORIES: NoteCategory[] = [
+  "spelling",
+  "grammar",
+  "tense",
+  "phrasing",
+  "punctuation",
+  "other",
+];
+
 export interface PolishAnalysisItem {
   original: string;
   issue: string;
   suggestion: string;
+  category?: NoteCategory;
 }
 
 export interface PolishResult {
@@ -30,7 +48,7 @@ Given the user's input draft:
 1. "bestForAgent": the SAME message polished into clear, grammatical ${targetLanguage}, addressed to an AI coding assistant. Rephrase only for correctness and clarity; the intent and requested actions must be identical to the draft.
 2. "naturalVersion": the SAME message in comfortable, polite ${targetLanguage}, suitable for human conversation (Slack, PR reviews, email). The same fidelity rules apply.
 3. "agentReasoning": in warm, clear Simplified Chinese, briefly explain what you changed and why. If the draft was already good, say so honestly instead of justifying edits you did not make.
-4. "analysis": list the concrete grammar, spelling, tense, or phrasing fixes you made, in a kind, constructive tone. Write each "issue" in Simplified Chinese, quote the draft text in "original", and give the improved ${targetLanguage} phrasing in "suggestion". If there is nothing to fix, give a warm encouragement instead of inventing problems.
+4. "analysis": list the concrete grammar, spelling, tense, or phrasing fixes you made, in a kind, constructive tone. Write each "issue" in Simplified Chinese, quote the draft text in "original", and give the improved ${targetLanguage} phrasing in "suggestion". Tag each item with a "category" chosen from exactly these values: "spelling", "grammar", "tense", "phrasing", "punctuation", "other". If there is nothing to fix, give a warm encouragement instead of inventing problems.
 
 Example input:
 "I follow this artical： https://code.claude.com/docs/en/advisor to set you run in advisor mode, could you help and check if everything sattle down？"
@@ -41,10 +59,10 @@ Example output JSON (when the target language is English):
   "naturalVersion": "I followed this article to set you up in advisor mode: https://code.claude.com/docs/en/advisor. Could you help me check if everything is set up correctly?",
   "agentReasoning": "只做了润色，没有添加新需求：修正了 artical→article 的拼写，把 I follow 改为过去式 I followed，并将 sattle down 还原为你想表达的 set up。语气和请求内容与你的原稿完全一致。",
   "analysis": [
-    { "original": "artical", "issue": "拼写小笔误", "suggestion": "article" },
-    { "original": "I follow", "issue": "已经完成的操作，用过去式更自然", "suggestion": "I followed" },
-    { "original": "set you run", "issue": "动词搭配稍显生硬", "suggestion": "set you up to run" },
-    { "original": "everything sattle down", "issue": "sattle 拼写有误；settle down 偏向“安顿生活”，配置语境下 set up 更贴合原意", "suggestion": "everything is set up correctly" }
+    { "original": "artical", "issue": "拼写小笔误", "suggestion": "article", "category": "spelling" },
+    { "original": "I follow", "issue": "已经完成的操作，用过去式更自然", "suggestion": "I followed", "category": "tense" },
+    { "original": "set you run", "issue": "动词搭配稍显生硬", "suggestion": "set you up to run", "category": "phrasing" },
+    { "original": "everything sattle down", "issue": "sattle 拼写有误；settle down 偏向“安顿生活”，配置语境下 set up 更贴合原意", "suggestion": "everything is set up correctly", "category": "spelling" }
   ]
 }
 
@@ -211,4 +229,86 @@ export async function polishTextWithGemini(
     console.error("Failed to parse Gemini response as JSON:", rawText, err);
     throw new Error("Failed to parse AI response into structured format.");
   }
+}
+
+/**
+ * Organize the mistake notebook with Gemini: dedupe, group by category,
+ * and return cleaned-up Markdown. Plain-text response, not JSON.
+ */
+export async function organizeNotebookWithGemini(
+  notebookMarkdown: string,
+  apiKey: string,
+  modelName: string = "gemini-2.5-flash"
+): Promise<string> {
+  if (!apiKey || apiKey.trim() === "") {
+    throw new Error("Gemini API Key is missing. Please set it in settings.");
+  }
+
+  const trimmed = notebookMarkdown.trim();
+  if (!trimmed) {
+    throw new Error("Notebook is empty.");
+  }
+
+  const cleanModel = modelName.replace(/^models\//, "");
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${apiKey.trim()}`;
+
+  const systemInstruction = `You are organizing a developer's English mistake notebook written in Markdown.
+
+Rules:
+1. Merge duplicate or near-duplicate mistakes (same wrong phrase and same correction) into one entry, keeping the most helpful explanation.
+2. Group entries under clear "## " category headings (e.g. 拼写 Spelling, 语法 Grammar, 时态 Tense, 措辞 Phrasing, 标点 Punctuation, 其他 Other). Keep entries inside their correct category.
+3. Keep every entry's original wording (the wrong phrase, the correction, the explanation) — reorganize and dedupe only, never invent new content.
+4. Keep the entry format: "- ~~wrong~~ → **correction** — explanation *(date)*". When merging duplicates from different dates, keep the most recent date.
+5. Start the document with "# Typo Mistake Notebook" followed by a one-line summary in Simplified Chinese of entry counts per category.
+6. Return ONLY the organized Markdown, no code fences, no commentary.`;
+
+  const payload = {
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            text: `Organize this mistake notebook:\n\n"""\n${trimmed}\n"""`,
+          },
+        ],
+      },
+    ],
+    systemInstruction: {
+      parts: [{ text: systemInstruction }],
+    },
+    generationConfig: {
+      temperature: 0.2,
+    },
+  };
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    let errorMsg = `Gemini API returned status ${response.status}`;
+    try {
+      const parsed = JSON.parse(errorBody);
+      if (parsed.error?.message) {
+        errorMsg = parsed.error.message;
+      }
+    } catch {
+      // ignore
+    }
+    throw new Error(errorMsg);
+  }
+
+  const data = await response.json();
+  const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+  if (!rawText || !rawText.trim()) {
+    throw new Error("No response received from Gemini.");
+  }
+
+  return rawText.trim();
 }

@@ -1,15 +1,40 @@
 import React, { useState } from "react";
-import { PolishResult } from "../services/gemini";
-import { Check, CornerDownLeft, Copy, ArrowRight, Terminal } from "lucide-react";
+import { PolishAnalysisItem, PolishResult } from "../services/gemini";
+import { CATEGORY_LABELS } from "../services/notes";
+import { Check, CornerDownLeft, Copy, ArrowRight, Terminal, BookPlus } from "lucide-react";
 
 interface ResultCardProps {
   result: PolishResult;
   onReplace: (text: string, clearFirst?: boolean) => void;
+  onSaveNote: (item: PolishAnalysisItem) => Promise<boolean>;
+  onSaveAllNotes: () => Promise<boolean>;
 }
 
-export const ResultCard: React.FC<ResultCardProps> = ({ result, onReplace }) => {
+export const ResultCard: React.FC<ResultCardProps> = ({ result, onReplace, onSaveNote, onSaveAllNotes }) => {
   const [copiedAgent, setCopiedAgent] = useState(false);
   const [copiedNatural, setCopiedNatural] = useState(false);
+  const [savedIdx, setSavedIdx] = useState<Set<number>>(new Set());
+  const [savedAll, setSavedAll] = useState(false);
+  const [savingAll, setSavingAll] = useState(false);
+
+  const handleSaveNote = async (item: PolishAnalysisItem, idx: number) => {
+    if (savedIdx.has(idx)) return;
+    const ok = await onSaveNote(item);
+    if (ok) {
+      setSavedIdx((prev) => new Set(prev).add(idx));
+    }
+  };
+
+  const handleSaveAll = async () => {
+    if (savingAll || savedAll) return;
+    setSavingAll(true);
+    const ok = await onSaveAllNotes();
+    setSavingAll(false);
+    if (ok) {
+      setSavedAll(true);
+      setSavedIdx(new Set(result.analysis.map((_, i) => i)));
+    }
+  };
 
   const copyToClipboard = async (text: string, type: "agent" | "natural") => {
     try {
@@ -118,6 +143,24 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onReplace }) => 
           <div className="flex items-center gap-2 mb-2 px-1">
             <span className="meta-caption text-stone-400">03 / Proofreading Notes</span>
             <div className="flex-1 h-px bg-stone-200/70" />
+            <button
+              onClick={handleSaveAll}
+              disabled={savingAll || savedAll}
+              title="Save all notes to the mistake notebook"
+              className="flex items-center gap-1 text-[10px] font-sans text-stone-500 hover:text-stone-900 disabled:text-stone-700 transition-colors cursor-pointer disabled:cursor-default"
+            >
+              {savedAll ? (
+                <>
+                  <Check className="w-3 h-3 text-stone-700" />
+                  <span>In notebook</span>
+                </>
+              ) : (
+                <>
+                  <BookPlus className="w-3 h-3" />
+                  <span>{savingAll ? "Saving…" : "Save all"}</span>
+                </>
+              )}
+            </button>
           </div>
 
           <div className="space-y-2">
@@ -134,6 +177,28 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onReplace }) => 
                   <span className="font-semibold text-stone-900">
                     {item.suggestion}
                   </span>
+                  <span className="flex-1" />
+                  {item.category && (
+                    <span className="shrink-0 font-sans text-[9px] text-stone-400 bg-stone-100 border border-stone-200/80 px-1 py-0.5 rounded">
+                      {CATEGORY_LABELS[item.category] || item.category}
+                    </span>
+                  )}
+                  <button
+                    onClick={() => handleSaveNote(item, idx)}
+                    disabled={savedIdx.has(idx)}
+                    title={savedIdx.has(idx) ? "Already in notebook" : "Save to mistake notebook"}
+                    className={`shrink-0 p-1 rounded transition-colors cursor-pointer disabled:cursor-default ${
+                      savedIdx.has(idx)
+                        ? "text-stone-700"
+                        : "text-stone-400 hover:text-stone-900 hover:bg-stone-100"
+                    }`}
+                  >
+                    {savedIdx.has(idx) ? (
+                      <Check className="w-3 h-3" />
+                    ) : (
+                      <BookPlus className="w-3 h-3" />
+                    )}
+                  </button>
                 </div>
                 <p className="text-[11px] text-stone-500 leading-normal pl-0.5">
                   {item.issue}
