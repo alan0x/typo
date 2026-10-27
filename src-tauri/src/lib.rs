@@ -45,6 +45,16 @@ fn replace_selection(app: tauri::AppHandle, text: String, clear_first: Option<bo
         .write_text(&text)
         .map_err(|e| format!("Clipboard error: {}", e))?;
 
+    // Terminal screens expose no editable selection, so pasting can never
+    // overwrite highlighted text there; the TUI input box must be cleared
+    // first. An explicit flag from the frontend wins, otherwise fall back to
+    // whether the text was grabbed from a terminal.
+    #[cfg(target_os = "macos")]
+    let auto_clear = SOURCE_IS_TERMINAL.lock().map(|f| *f).unwrap_or(false);
+    #[cfg(not(target_os = "macos"))]
+    let auto_clear = false;
+    let clear = clear_first.unwrap_or(auto_clear);
+
     // 2. Hide Typo so OS focus returns to the original window (IDE, terminal, browser, etc.)
     hide_app(&app);
 
@@ -53,17 +63,18 @@ fn replace_selection(app: tauri::AppHandle, text: String, clear_first: Option<bo
     //    calls Carbon TIS APIs which assert the main dispatch queue, so doing
     //    the key simulation off the main thread crashes the app.
     std::thread::spawn(move || {
-        std::thread::sleep(std::time::Duration::from_millis(120));
+        std::thread::sleep(std::time::Duration::from_millis(200));
         let _ = app.run_on_main_thread(move || {
-            // Terminal screens expose no editable selection, so pasting can
-            // never overwrite highlighted text there. For TUIs like Kimi Code
-            // where Ctrl+C clears the input box when idle, clearing first
-            // turns the paste into a true replace.
-            if clear_first.unwrap_or(false) {
+            if clear {
                 if let Err(e) = actions::send_ctrl_c() {
                     eprintln!("Failed to clear input box: {}", e);
                 }
-                std::thread::sleep(std::time::Duration::from_millis(30));
+                // Claude Code handles Ctrl+C as an async interrupt (SIGINT),
+                // unlike TUIs that treat it as an ordered key event. Give the
+                // clear enough time to land before the paste bytes arrive,
+                // otherwise the pasted text races the clear and gets wiped
+                // or appended to the draft.
+                std::thread::sleep(std::time::Duration::from_millis(150));
             }
             if let Err(e) = actions::paste_selection() {
                 eprintln!("Failed to paste selection: {}", e);
@@ -169,6 +180,12 @@ fn frontmost_is_terminal() -> bool {
         .any(|t| info.contains(&format!("bundleID=\"{}\"", t)))
 }
 
+// Whether the text was grabbed from a terminal, recorded at hotkey time while
+// the source app is still frontmost. replace_selection reads it later, when
+// Typo itself is the frontmost app and a fresh check would be useless.
+#[cfg(target_os = "macos")]
+static SOURCE_IS_TERMINAL: std::sync::Mutex<bool> = std::sync::Mutex::new(false);
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -178,6 +195,19 @@ pub fn run() {
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(move |app, _shortcut, event| {
                     if event.state() == ShortcutState::Pressed {
+                        // Record the source app kind up front, while it is
+                        // still the frontmost app.
+                        #[cfg(target_os = "macos")]
+                        let is_terminal = {
+                            let t = frontmost_is_terminal();
+                            if let Ok(mut flag) = SOURCE_IS_TERMINAL.lock() {
+                                *flag = t;
+                            }
+                            t
+                        };
+                        #[cfg(not(target_os = "macos"))]
+                        let is_terminal = false;
+
                         // Step 1: try to copy currently selected text
                         let before = app.clipboard().read_text().ok();
                         if let Err(e) = actions::copy_selection() {
@@ -189,19 +219,12 @@ pub fn run() {
                         // selection; fall back to grabbing the whole focused
                         // field with Cmd/Ctrl+A + Cmd/Ctrl+C. Skipped for
                         // terminals, where Cmd+A selects the screen.
-                        if grabbed == before {
-                            #[cfg(target_os = "macos")]
-                            let is_terminal = frontmost_is_terminal();
-                            #[cfg(not(target_os = "macos"))]
-                            let is_terminal = false;
-
-                            if !is_terminal {
-                                let _ = actions::select_all();
-                                let _ = actions::copy_selection();
-                                let grabbed_all = app.clipboard().read_text().ok();
-                                if grabbed_all != before {
-                                    grabbed = grabbed_all;
-                                }
+                        if grabbed == before && !is_terminal {
+                            let _ = actions::select_all();
+                            let _ = actions::copy_selection();
+                            let grabbed_all = app.clipboard().read_text().ok();
+                            if grabbed_all != before {
+                                grabbed = grabbed_all;
                             }
                         }
 

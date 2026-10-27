@@ -36,7 +36,7 @@ When pairing with autonomous AI coding agents like **Claude Code**, **Cursor**, 
 
 **Typo compresses this entire review cycle into a single keystroke**:
 - 🔍 **Proofreading Marginalia**: Striking through errors and offering concise notes on idiomatic nuance.
-- 🤖 **Agent-First Directives**: Generating action-oriented prompts that instruct agents to verify runtime status and execute tests.
+- 🤖 **Faithful Polishing**: Fixes grammar, spelling, and phrasing while strictly preserving your original intent — never inventing requirements you didn't ask for.
 - 💬 **Peer Phrasing**: Providing natural colloquial alternatives for Slack and GitHub reviews.
 - ⚡ **Zero-Friction In-Place Replacement**: Pressing `Enter` automatically writes the refined text back to your editor and dismisses the window.
 

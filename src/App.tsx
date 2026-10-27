@@ -30,11 +30,11 @@ export function App() {
     isDemo
       ? {
           bestForAgent:
-            "I followed this guide to enable advisor mode for you: https://code.claude.com/docs/en/advisor. Could you check whether advisor mode is configured correctly and working as expected?",
+            "I followed this article (https://code.claude.com/docs/en/advisor) to set you up to run in advisor mode. Could you help me check whether everything is set up correctly?",
           naturalVersion:
-            "I followed this guide to enable advisor mode for you. Could you help me verify that everything is set up correctly?",
+            "I followed this article to set you up in advisor mode: https://code.claude.com/docs/en/advisor. Could you help me check if everything is set up correctly?",
           agentReasoning:
-            "Explicitly states 'working as expected' to initiate active runtime verification rather than passive check.",
+            "Only polished spelling and grammar (artical → article, I follow → I followed). No new requirements added — the request is identical to your draft.",
           analysis: [
             {
               original: "artical",
