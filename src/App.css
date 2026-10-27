@@ -117,6 +117,9 @@ body {
 }
 
 .notebook-md li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
   padding: 6px 8px;
   margin: 4px 0;
   background: #ffffff;
@@ -124,6 +127,15 @@ body {
   border-radius: 8px;
   font-size: 12px;
   line-height: 1.6;
+}
+
+.notebook-md .entry-delete {
+  opacity: 0;
+  margin-top: 1px;
+}
+
+.notebook-md li:hover .entry-delete {
+  opacity: 1;
 }
 
 .notebook-md del {

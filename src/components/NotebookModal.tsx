@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { marked } from "marked";
-import { X, RefreshCw, FolderOpen, Sparkles, Loader2, BookOpen } from "lucide-react";
+import { X, RefreshCw, FolderOpen, Sparkles, Loader2, BookOpen, Trash2 } from "lucide-react";
 import {
   getDefaultNotesDir,
   readNotebook,
@@ -15,6 +15,34 @@ interface NotebookModalProps {
   notesDir: string;
   apiKey: string;
   model: string;
+}
+
+interface NotebookBlock {
+  kind: "h1" | "h2" | "entry" | "para";
+  lineIndex: number;
+  text: string;
+}
+
+function parseBlocks(markdown: string): NotebookBlock[] {
+  const blocks: NotebookBlock[] = [];
+  markdown.split("\n").forEach((line, i) => {
+    const t = line.trim();
+    if (!t) return;
+    if (t.startsWith("## ")) {
+      blocks.push({ kind: "h2", lineIndex: i, text: t.slice(3) });
+    } else if (t.startsWith("# ")) {
+      blocks.push({ kind: "h1", lineIndex: i, text: t.slice(2) });
+    } else if (t.startsWith("- ")) {
+      blocks.push({ kind: "entry", lineIndex: i, text: line.trim().slice(2) });
+    } else {
+      blocks.push({ kind: "para", lineIndex: i, text: t });
+    }
+  });
+  return blocks;
+}
+
+function inlineHtml(text: string): string {
+  return marked.parseInline(text) as string;
 }
 
 export const NotebookModal: React.FC<NotebookModalProps> = ({
@@ -83,7 +111,69 @@ export const NotebookModal: React.FC<NotebookModalProps> = ({
     }
   };
 
-  const html = content.trim() ? (marked.parse(content) as string) : "";
+  const handleDeleteEntry = async (lineIndex: number) => {
+    const lines = content.split("\n");
+    if (lineIndex < 0 || lineIndex >= lines.length) return;
+    lines.splice(lineIndex, 1);
+    const next = lines.join("\n");
+    setContent(next);
+    try {
+      await writeNotebook(next, notesDir || undefined);
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message || "Failed to delete entry." });
+      load();
+    }
+  };
+
+  // Group consecutive entries into <ul> lists; other blocks render as-is.
+  const renderBlocks = () => {
+    const blocks = parseBlocks(content);
+    const nodes: React.ReactNode[] = [];
+    let listBuffer: NotebookBlock[] = [];
+
+    const flushList = () => {
+      if (listBuffer.length === 0) return;
+      nodes.push(
+        <ul key={`ul-${listBuffer[0].lineIndex}`}>
+          {listBuffer.map((b) => (
+            <li key={b.lineIndex}>
+              <span
+                className="flex-1 min-w-0"
+                dangerouslySetInnerHTML={{ __html: inlineHtml(b.text) }}
+              />
+              <button
+                onClick={() => handleDeleteEntry(b.lineIndex)}
+                title="Delete this entry"
+                className="entry-delete shrink-0 p-0.5 text-stone-300 hover:text-rose-700 rounded transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      );
+      listBuffer = [];
+    };
+
+    for (const b of blocks) {
+      if (b.kind === "entry") {
+        listBuffer.push(b);
+        continue;
+      }
+      flushList();
+      if (b.kind === "h1") {
+        nodes.push(<h1 key={b.lineIndex} dangerouslySetInnerHTML={{ __html: inlineHtml(b.text) }} />);
+      } else if (b.kind === "h2") {
+        nodes.push(<h2 key={b.lineIndex} dangerouslySetInnerHTML={{ __html: inlineHtml(b.text) }} />);
+      } else {
+        nodes.push(<p key={b.lineIndex} dangerouslySetInnerHTML={{ __html: inlineHtml(b.text) }} />);
+      }
+    }
+    flushList();
+    return nodes;
+  };
+
+  const hasContent = content.trim().length > 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/30 backdrop-blur-2xs animate-fade-in">
@@ -155,11 +245,10 @@ export const NotebookModal: React.FC<NotebookModalProps> = ({
               <div className="h-10 bg-stone-50 rounded" />
               <div className="h-14 bg-stone-50 rounded" />
             </div>
-          ) : html ? (
-            <div
-              className="notebook-md text-[12px] leading-relaxed text-stone-800 select-text"
-              dangerouslySetInnerHTML={{ __html: html }}
-            />
+          ) : hasContent ? (
+            <div className="notebook-md text-[12px] leading-relaxed text-stone-800 select-text">
+              {renderBlocks()}
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center text-center py-10 select-none">
               <BookOpen className="w-8 h-8 text-stone-300 mb-3" />
