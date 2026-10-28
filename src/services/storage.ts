@@ -1,4 +1,4 @@
-import { DEFAULT_SUMMON_LABEL } from "../utils/platform";
+import { DEFAULT_QUICK_LABEL, DEFAULT_SUMMON_LABEL } from "../utils/platform";
 
 export interface AvailableModel {
   id: string;
@@ -15,6 +15,8 @@ export interface AppSettings {
   hotkey: string;
   targetLanguage: string;
   notesDir: string;
+  quickHotkey: string;
+  quickOutput: "agent" | "natural";
 }
 
 const STORAGE_KEY = "typo_settings_v2";
@@ -64,6 +66,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   hotkey: DEFAULT_SUMMON_LABEL,
   targetLanguage: "English",
   notesDir: "",
+  quickHotkey: DEFAULT_QUICK_LABEL,
+  quickOutput: "agent",
 };
 
 export function loadSettings(): AppSettings {

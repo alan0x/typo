@@ -3,6 +3,7 @@ import { Header } from "./components/Header";
 import { SettingsModal } from "./components/SettingsModal";
 import { ResultCard } from "./components/ResultCard";
 import { NotebookModal } from "./components/NotebookModal";
+import { ToastView } from "./components/ToastView";
 import { loadSettings, saveSettings, AppSettings } from "./services/storage";
 import { polishTextWithGemini, PolishAnalysisItem, PolishResult } from "./services/gemini";
 import { appendEntries } from "./services/notes";
@@ -14,6 +15,12 @@ import { REFINE_HOTKEY_LABEL } from "./utils/platform";
 export function App() {
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const isDemo = searchParams?.get("demo") === "true";
+
+  // The auxiliary quick-replace window (index.html?view=toast) renders only
+  // the floating indicator.
+  if (searchParams?.get("view") === "toast") {
+    return <ToastView />;
+  }
 
   const [settings, setSettings] = useState<AppSettings>(() => {
     const loaded = loadSettings();
@@ -151,8 +158,9 @@ export function App() {
 
   const handleReplace = async (text: string, clearFirst = false) => {
     try {
-      // Terminal mode: clear the TUI input box with Ctrl+C before pasting,
-      // since terminal selections cannot be overwritten by paste.
+      // On macOS the backend always sends Ctrl+C first (harmless in GUI
+      // text fields) so terminal drafts are cleared before pasting;
+      // clearFirst only matters on Windows.
       await invoke("replace_selection", { text, clearFirst });
     } catch (err) {
       console.error("Replace failed:", err);

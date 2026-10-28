@@ -1,10 +1,11 @@
 pub mod actions;
 pub mod notes;
+pub mod scrape;
 
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Emitter, Manager, PhysicalPosition, Position,
+    Emitter, Manager, PhysicalPosition, Position, WebviewUrl, WebviewWindowBuilder,
 };
 use tauri_plugin_clipboard_manager::ClipboardExt;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
@@ -46,25 +47,55 @@ fn replace_selection(app: tauri::AppHandle, text: String, clear_first: Option<bo
         .write_text(&text)
         .map_err(|e| format!("Clipboard error: {}", e))?;
 
-    // Terminal screens expose no editable selection, so pasting can never
-    // overwrite highlighted text there; the TUI input box must be cleared
-    // first. An explicit flag from the frontend wins, otherwise fall back to
-    // whether the text was grabbed from a terminal.
+    // On macOS, Ctrl+C is unbound in native text fields (copy is Cmd+C), so
+    // we can ALWAYS send it before pasting: in terminals it clears the TUI
+    // input line (Claude Code, Kimi Code, shells), turning the paste into a
+    // true replace; in GUI apps it is a no-op and the paste replaces the
+    // active selection. On Windows Ctrl+C means copy and would clobber the
+    // clipboard we just wrote, so clearing stays opt-in there.
     #[cfg(target_os = "macos")]
-    let auto_clear = SOURCE_IS_TERMINAL.lock().map(|f| *f).unwrap_or(false);
+    let clear = {
+        let _ = clear_first;
+        true
+    };
     #[cfg(not(target_os = "macos"))]
-    let auto_clear = false;
-    let clear = clear_first.unwrap_or(auto_clear);
+    let clear = clear_first.unwrap_or(false);
 
-    // 2. Hide Typo so OS focus returns to the original window (IDE, terminal, browser, etc.)
+    // 2. Hide Typo so OS focus returns to the original window — but only when
+    //    Typo is actually frontmost (HUD flow). In the quick-replace flow the
+    //    toast window stays visible and focus never left the source app.
+    #[cfg(target_os = "macos")]
+    {
+        if frontmost_bundle_id().as_deref() == Some(app.config().identifier.as_str()) {
+            hide_app(&app);
+        }
+    }
+    #[cfg(not(target_os = "macos"))]
     hide_app(&app);
 
-    // 3. Wait in a background thread for the previous window to regain focus,
-    //    then simulate keystrokes on the main thread. enigo's macOS backend
-    //    calls Carbon TIS APIs which assert the main dispatch queue, so doing
-    //    the key simulation off the main thread crashes the app.
+    // 3. Wait in a background thread until focus has actually left Typo (or a
+    //    fixed delay on Windows), then simulate keystrokes on the main
+    //    thread. enigo's macOS backend calls Carbon TIS APIs which assert the
+    //    main dispatch queue, so doing the key simulation off the main thread
+    //    crashes the app.
+    #[cfg(target_os = "macos")]
+    let own_id = app.config().identifier.clone();
     std::thread::spawn(move || {
+        #[cfg(target_os = "macos")]
+        {
+            std::thread::sleep(std::time::Duration::from_millis(100));
+            for _ in 0..24 {
+                match frontmost_bundle_id() {
+                    Some(id) if id == own_id => {
+                        std::thread::sleep(std::time::Duration::from_millis(50));
+                    }
+                    _ => break,
+                }
+            }
+        }
+        #[cfg(not(target_os = "macos"))]
         std::thread::sleep(std::time::Duration::from_millis(200));
+
         let _ = app.run_on_main_thread(move || {
             if clear {
                 if let Err(e) = actions::send_ctrl_c() {
@@ -129,6 +160,44 @@ fn show_hud_window(app: &tauri::AppHandle, text: Option<&str>) {
     }
 }
 
+// The toast is a tiny always-on-top indicator for the quick-replace flow. It
+// is created with `focused: false`, so showing it does not steal keyboard
+// focus from the source app (GUI selections and TUI input stay intact).
+fn show_toast_window(app: &tauri::AppHandle) {
+    #[cfg(target_os = "macos")]
+    let _ = app.show();
+
+    if let Some(window) = app.get_webview_window("toast") {
+        if let Some((mut cur_x, mut cur_y)) = actions::get_cursor_location() {
+            cur_x += 12;
+            cur_y += 16;
+
+            if let Ok(Some(monitor)) = window.current_monitor() {
+                let mon_size = monitor.size();
+                let mon_pos = monitor.position();
+                let max_x = mon_pos.x + (mon_size.width as i32) - 250;
+                let max_y = mon_pos.y + (mon_size.height as i32) - 90;
+
+                cur_x = cur_x.clamp(mon_pos.x + 10, max_x.max(mon_pos.x + 10));
+                cur_y = cur_y.clamp(mon_pos.y + 10, max_y.max(mon_pos.y + 10));
+            }
+
+            let _ = window.set_position(Position::Physical(PhysicalPosition {
+                x: cur_x,
+                y: cur_y,
+            }));
+        }
+
+        let _ = window.show();
+    }
+}
+
+#[tauri::command]
+fn present_toast(app: tauri::AppHandle) -> Result<(), String> {
+    show_toast_window(&app);
+    Ok(())
+}
+
 // Terminal mouse selections pad each visual line with trailing spaces up to
 // the window width, polluting the captured text. Right-trimming every line
 // removes that padding and is harmless for GUI text sources.
@@ -141,31 +210,34 @@ fn sanitize_grabbed(text: &str) -> String {
         .to_string()
 }
 
-// In a terminal, Cmd+A selects the whole screen rather than an input field,
-// so the select-all grab fallback would capture scrollback junk. lsappinfo
-// reports the frontmost app's bundle id without any special permission.
+// lsappinfo reports the frontmost app's bundle id without any special
+// permission.
 #[cfg(target_os = "macos")]
-fn frontmost_is_terminal() -> bool {
+fn frontmost_bundle_id() -> Option<String> {
     let asn = std::process::Command::new("lsappinfo")
         .arg("front")
         .output()
         .ok()
         .filter(|o| o.status.success())
-        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string());
-    let Some(asn) = asn.filter(|a| !a.is_empty()) else {
-        return false;
-    };
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+        .filter(|a| !a.is_empty())?;
 
     let info = std::process::Command::new("lsappinfo")
         .args(["info", "-only", "bundleID", &asn])
         .output()
         .ok()
         .filter(|o| o.status.success())
-        .map(|o| String::from_utf8_lossy(&o.stdout).to_string());
-    let Some(info) = info else {
-        return false;
-    };
+        .map(|o| String::from_utf8_lossy(&o.stdout).to_string())?;
 
+    let start = info.find("bundleID=\"")? + "bundleID=\"".len();
+    let end = info[start..].find('"')? + start;
+    Some(info[start..end].to_string())
+}
+
+// In a terminal, Cmd+A selects the whole screen rather than an input field,
+// so the select-all grab fallback would capture scrollback junk.
+#[cfg(target_os = "macos")]
+fn frontmost_is_terminal() -> bool {
     const TERMINALS: &[&str] = &[
         "com.apple.Terminal",
         "com.googlecode.iterm2",
@@ -176,16 +248,10 @@ fn frontmost_is_terminal() -> bool {
         "com.github.wez.wezterm",
         "co.zeit.hyper",
     ];
-    TERMINALS
-        .iter()
-        .any(|t| info.contains(&format!("bundleID=\"{}\"", t)))
+    frontmost_bundle_id()
+        .map(|id| TERMINALS.contains(&id.as_str()))
+        .unwrap_or(false)
 }
-
-// Whether the text was grabbed from a terminal, recorded at hotkey time while
-// the source app is still frontmost. replace_selection reads it later, when
-// Typo itself is the frontmost app and a fresh check would be useless.
-#[cfg(target_os = "macos")]
-static SOURCE_IS_TERMINAL: std::sync::Mutex<bool> = std::sync::Mutex::new(false);
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -195,46 +261,82 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
-                .with_handler(move |app, _shortcut, event| {
-                    if event.state() == ShortcutState::Pressed {
-                        // Record the source app kind up front, while it is
-                        // still the frontmost app.
-                        #[cfg(target_os = "macos")]
-                        let is_terminal = {
-                            let t = frontmost_is_terminal();
-                            if let Ok(mut flag) = SOURCE_IS_TERMINAL.lock() {
-                                *flag = t;
-                            }
-                            t
-                        };
-                        #[cfg(not(target_os = "macos"))]
-                        let is_terminal = false;
+                .with_handler(move |app, shortcut, event| {
+                    if event.state() != ShortcutState::Pressed {
+                        return;
+                    }
 
-                        // Step 1: try to copy currently selected text
-                        let before = app.clipboard().read_text().ok();
-                        if let Err(e) = actions::copy_selection() {
-                            eprintln!("Failed to copy selection: {}", e);
+                    let quick_shortcut: Shortcut =
+                        "alt+shift+r".parse().expect("valid shortcut");
+                    let is_quick = shortcut == &quick_shortcut;
+
+                    #[cfg(target_os = "macos")]
+                    let is_terminal = frontmost_is_terminal();
+                    #[cfg(not(target_os = "macos"))]
+                    let is_terminal = false;
+
+                    // Step 1: try to copy currently selected text
+                    let before = app.clipboard().read_text().ok();
+                    if let Err(e) = actions::copy_selection() {
+                        eprintln!("Failed to copy selection: {}", e);
+                    }
+                    let mut grabbed = app.clipboard().read_text().ok();
+
+                    // Step 2: clipboard unchanged means there is no
+                    // selection; fall back to grabbing the whole focused
+                    // field with Cmd/Ctrl+A + Cmd/Ctrl+C. Skipped for
+                    // terminals, where Cmd+A selects the screen.
+                    if grabbed == before && !is_terminal {
+                        let _ = actions::select_all();
+                        let _ = actions::copy_selection();
+                        let grabbed_all = app.clipboard().read_text().ok();
+                        if grabbed_all != before {
+                            grabbed = grabbed_all;
                         }
-                        let mut grabbed = app.clipboard().read_text().ok();
+                    }
 
-                        // Step 2: clipboard unchanged means there is no
-                        // selection; fall back to grabbing the whole focused
-                        // field with Cmd/Ctrl+A + Cmd/Ctrl+C. Skipped for
-                        // terminals, where Cmd+A selects the screen.
-                        if grabbed == before && !is_terminal {
-                            let _ = actions::select_all();
-                            let _ = actions::copy_selection();
-                            let grabbed_all = app.clipboard().read_text().ok();
-                            if grabbed_all != before {
-                                grabbed = grabbed_all;
+                    // Step 3 (quick mode only): in a terminal with no mouse
+                    // selection, Cmd+A grabs the whole screen and we parse
+                    // the TUI input box (Claude Code / Kimi Code layout) out
+                    // of it. Strict parsing falls through to the HUD path.
+                    #[cfg(target_os = "macos")]
+                    if is_quick && grabbed == before && is_terminal {
+                        let _ = actions::select_all();
+                        let _ = actions::copy_selection();
+                        if let Ok(screen) = app.clipboard().read_text() {
+                            if Some(&screen) != before.as_ref() {
+                                if let Some(input) = scrape::parse_tui_input(&screen) {
+                                    grabbed = Some(input);
+                                }
                             }
                         }
+                    }
 
-                        // Step 3: clean up and show the HUD near the cursor
-                        let text = grabbed
-                            .map(|t| sanitize_grabbed(&t))
-                            .filter(|t| !t.is_empty());
+                    let text = grabbed
+                        .map(|t| sanitize_grabbed(&t))
+                        .filter(|t| !t.is_empty());
+
+                    if !is_quick {
                         show_hud_window(app, text.as_deref());
+                        return;
+                    }
+
+                    // Quick replace: hand off to the toast window, which
+                    // polishes silently and pastes the result back in place.
+                    match text {
+                        Some(t) if t.chars().count() > 3000 => {
+                            // Probably grabbed an entire page; too risky to
+                            // auto-replace, review it in the HUD instead.
+                            show_hud_window(app, Some(&t));
+                        }
+                        Some(t) => {
+                            show_toast_window(app);
+                            let _ = app.emit_to("toast", "quick-polish", t);
+                        }
+                        None => {
+                            show_toast_window(app);
+                            let _ = app.emit_to("toast", "quick-empty", ());
+                        }
                     }
                 })
                 .build(),
@@ -275,9 +377,30 @@ pub fn run() {
                 })
                 .build(app)?;
 
-            // Register default global shortcut (Alt+Shift+E)
+            // Register global shortcuts: Alt+Shift+E opens the HUD workshop,
+            // Alt+Shift+R polishes and replaces in place without the HUD.
             let shortcut: Shortcut = "alt+shift+e".parse().expect("Failed to parse shortcut");
             let _ = app.global_shortcut().register(shortcut);
+            let quick_shortcut: Shortcut = "alt+shift+r".parse().expect("Failed to parse shortcut");
+            let _ = app.global_shortcut().register(quick_shortcut);
+
+            // Pre-create the hidden toast window used by quick replace.
+            // `focused: false` keeps keyboard focus in the source app.
+            let _toast = WebviewWindowBuilder::new(
+                app,
+                "toast",
+                WebviewUrl::App("index.html?view=toast".into()),
+            )
+            .title("Typo")
+            .inner_size(240.0, 76.0)
+            .resizable(false)
+            .decorations(false)
+            .transparent(true)
+            .always_on_top(true)
+            .skip_taskbar(true)
+            .focused(false)
+            .visible(false)
+            .build()?;
 
             Ok(())
         })
@@ -286,6 +409,7 @@ pub fn run() {
             show_window,
             start_dragging,
             replace_selection,
+            present_toast,
             notes::get_default_notes_dir,
             notes::append_note_entries,
             notes::read_notebook,

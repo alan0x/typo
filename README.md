@@ -69,6 +69,7 @@ Bring Your Own Key directly from Google AI Studio. Typo automatically queries th
 ## ✨ Core Features
 
 - **🎯 Cross-Platform Global Summon**: Works globally on Windows (`Alt + Shift + E`) and macOS (`⌥⇧E`).
+- **⚡ Quick Replace**: `⌥⇧R` polishes and replaces in place without opening the HUD — a tiny toast shows progress. Works in GUI fields (selection or whole input box) and in terminal TUIs like Claude Code / Kimi Code, where the input box is auto-detected from the screen (strict parsing falls back to the HUD when unsure).
 - **⚡ Native Text Capture**: Automatically grabs selected text upon hotkey trigger without manual `Ctrl+C`.
 - **🖐️ Full Titlebar Dragging**: Smooth, native window movement anywhere across the top bar.
 - **🤖 Dynamic Model Routing**: Query and switch between `gemini-2.5-flash`, `gemini-2.5-pro`, and any available generative model.
@@ -83,6 +84,7 @@ Bring Your Own Key directly from Google AI Studio. Typo automatically queries th
 | Action | Windows / Linux | macOS |
 | :--- | :--- | :--- |
 | **Summon Typo HUD** | `Alt + Shift + E` | `⌥⇧E` |
+| **Quick Replace (no HUD)** | `Alt + Shift + R` | `⌥⇧R` |
 | **Replace in Source & Dismiss** | `Enter` (when card is focused) | `Return` |
 | **Refine Draft Input** | `Ctrl + Enter` | `⌘↵` |
 | **Dismiss Window** | `Esc` | `Esc` |

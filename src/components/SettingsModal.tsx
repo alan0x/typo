@@ -263,6 +263,36 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </p>
           </div>
 
+          {/* Quick Replace */}
+          <div className="space-y-1.5 pt-1">
+            <label className="text-[11px] font-medium text-stone-700 tracking-wide uppercase">
+              Quick Replace (no HUD)
+            </label>
+
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-mono text-[10px] text-stone-700 bg-stone-100 px-1.5 py-0.5 rounded border border-stone-200">
+                {formData.quickHotkey}
+              </span>
+              <select
+                value={formData.quickOutput}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    quickOutput: e.target.value as "agent" | "natural",
+                  })
+                }
+                className="flex-1 px-2 py-1 bg-white border border-stone-300 rounded-md text-stone-900 font-sans text-[11px] focus:outline-none focus:border-stone-800 transition-colors"
+              >
+                <option value="agent">Paste agent version</option>
+                <option value="natural">Paste natural version</option>
+              </select>
+            </div>
+
+            <p className="text-[10px] text-stone-400">
+              Polishes selected text (or the current input box) and replaces it in place, without opening the HUD.
+            </p>
+          </div>
+
           {/* Mistake Notebook Location */}
           <div className="space-y-1.5 pt-1">
             <label className="text-[11px] font-medium text-stone-700 tracking-wide uppercase">

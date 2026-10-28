@@ -88,7 +88,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onReplace, onSav
 
             <button
               onClick={() => onReplace(result.bestForAgent, true)}
-              title="Terminal sources (Claude Code, Kimi Code, …) are detected and cleared automatically. ⇧↵ forces a Ctrl+C clear before pasting — only while the TUI is idle."
+              title="On macOS every replace sends Ctrl+C first (harmless in GUI text fields), so terminal drafts are replaced, not appended. On Windows use ⇧↵ in terminal TUIs. Only replace while the TUI is idle."
               className="px-2.5 py-1 text-[11px] font-sans font-medium text-stone-600 hover:text-stone-900 bg-white hover:bg-stone-100 border border-stone-300 active:scale-[0.98] rounded-md transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
             >
               <Terminal className="w-3 h-3" />
