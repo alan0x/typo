@@ -69,9 +69,11 @@ jobs:
             Typo is a lightweight, distraction-free desktop HUD that transforms rough English drafts into crisp, professional prose and turns plain text instructions into structured AI agent prompts.
 
             #### Downloads
-            - **macOS (Recommended 1-Click Installer)**: `Typo_*_aarch64.pkg` (Apple Silicon) / `Typo_*_x64.pkg` (Intel)
-            - **macOS (Disk Image)**: `Typo_*_aarch64.dmg` / `Typo_*_x64.dmg`
-            - **Windows (Installer)**: `Typo_*_x64-setup.exe` / `Typo_*_x64_en-US.msi`
+            - **macOS (Disk Image)**: `Typo_*_aarch64.dmg` (Apple Silicon) / `Typo_*_x64.dmg` (Intel)
+            - **macOS (Installer)**: `Typo_*_aarch64.pkg` / `Typo_*_x64.pkg`
+            - **Windows**: `Typo_*_x64-setup.exe` / `Typo_*_x64_en-US.msi`
+
+            > 🍎 **macOS Notice**: If macOS displays *"Typo is damaged and can't be opened"* or blocks installation because of ad-hoc open-source signing, simply run `xattr -cr /Applications/Typo.app` in Terminal to clear Gatekeeper quarantine.
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}

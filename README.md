@@ -58,7 +58,7 @@ Actual capture of the desktop HUD in action:
 ---
 
 ### 2. BYOK & Dynamic Model Discovery
-Bring Your Own Key directly from Google AI Studio. Typo automatically queries the Google Generative AI registry to populate your active key's real model options:
+Bring Your Own Key directly from **Google AI Studio** or **DeepSeek Platform**. Typo supports both providers and queries their registries to populate real model options (e.g. `gemini-2.5-flash`, `deepseek-chat`, `deepseek-reasoner`):
 
 <p align="center">
   <img src="assets/screenshot-preferences.png" alt="Preferences and Real Model Discovery Screenshot" width="70%" style="border-radius: 12px; box-shadow: 0 16px 36px rgba(0,0,0,0.12);" />
@@ -72,7 +72,7 @@ Bring Your Own Key directly from Google AI Studio. Typo automatically queries th
 - **⚡ Quick Replace**: `⌥⇧R` polishes and replaces in place without opening the HUD — a tiny toast shows progress. Works in GUI fields (selection or whole input box) and in terminal TUIs like Claude Code / Kimi Code, where the input box is auto-detected from the screen (strict parsing falls back to the HUD when unsure).
 - **⚡ Native Text Capture**: Automatically grabs selected text upon hotkey trigger without manual `Ctrl+C`.
 - **🖐️ Full Titlebar Dragging**: Smooth, native window movement anywhere across the top bar.
-- **🤖 Dynamic Model Routing**: Query and switch between `gemini-2.5-flash`, `gemini-2.5-pro`, and any available generative model.
+- **🤖 Multi-Provider & Dynamic Routing**: Query and switch between Google Gemini (`gemini-2.5-flash`, `gemini-2.5-pro`) and DeepSeek (`deepseek-chat`, `deepseek-reasoner`), with customizable base URL.
 - **📓 Mistake Notebook**: Save proofreading notes to a local Markdown notebook (`~/.typo/notebook.md`, customizable) with one click — auto-categorized on save, reviewable anytime in-app, with optional AI reorganization (dedupe & regroup, always backed up first).
 - **🌿 Quiet Craftsmanship**: Warm linen canvas (`#f7f6f2`), quiet typography, and zero flashy gimmicks.
 - **🪶 Ultra-Low Footprint**: Powered by **Tauri 2.0 (Rust) + React 19 + Tailwind CSS**, consuming only ~30MB of RAM.
@@ -119,25 +119,29 @@ Pre-built binaries for **v0.1.1** are available on [**GitHub Releases**](https:/
   - Installer: [`Typo_0.1.1_x64-setup.exe`](https://github.com/alan0x/typo/releases/download/v0.1.1/Typo_0.1.1_x64-setup.exe)
   - MSI: [`Typo_0.1.1_x64_en-US.msi`](https://github.com/alan0x/typo/releases/download/v0.1.1/Typo_0.1.1_x64_en-US.msi)
 
-### 🍎 Note for macOS Users ("Typo is damaged and can't be opened")
+### 🍎 Note for macOS Users ("Typo is damaged and can't be opened" / "未受信任的开发者")
 
-Because Typo is an independent open-source project and not signed with a paid Apple Developer certificate, macOS Gatekeeper attaches a quarantine attribute to downloaded `.app` bundles, displaying:
-> *"Typo is damaged and can't be opened. You should move it to the Trash."*
+Because Typo is an independent open-source project and not signed with a paid Apple Developer certificate ($99/year), macOS Gatekeeper attaches an extended quarantine attribute (`com.apple.quarantine`) to downloaded packages from browsers, displaying:
+> *"Typo is damaged and can't be opened. You should move it to the Trash."* (或者提示无法打开/未识别的开发者)
 
 **The app is completely safe and undamaged.** Choose either installation path:
 
-**Option A — .pkg installer (recommended, zero terminal commands)**
-1. Download `Typo_*_aarch64.pkg` (Apple Silicon) or `Typo_*_x64.pkg` (Intel).
-2. Double-click and follow the guided installer. If macOS blocks it, right-click the .pkg → **Open** → **Open Anyway**.
-3. The installer automatically removes the quarantine attribute — Typo is ready to launch from Spotlight.
-
-**Option B — .dmg disk image**
-1. Open the `.dmg` and drag **Typo.app** into your **Applications** folder.
-2. Open **Terminal** and run:
+**Option A — .dmg disk image (Quickest)**
+1. Download `Typo_*_aarch64.dmg` (Apple Silicon) or `Typo_*_x64.dmg` (Intel).
+2. Open the `.dmg` and drag **Typo.app** into your **Applications** folder.
+3. Open **Terminal** and run this one-line command to remove the quarantine flag:
    ```bash
    xattr -cr /Applications/Typo.app
    ```
-3. Open Typo normally from Spotlight, Launchpad, or `/Applications`.
+4. Launch Typo normally from Spotlight, Launchpad, or `/Applications`.
+
+**Option B — .pkg installer**
+1. Download `Typo_*_aarch64.pkg` (Apple Silicon) or `Typo_*_x64.pkg` (Intel).
+2. If macOS blocks opening the `.pkg`:
+   - On macOS 14 & earlier: Right-click the `.pkg` → **Open** → **Open Anyway**.
+   - On macOS 15 Sequoia: Go to **System Settings** → **Privacy & Security**, scroll down to find the notice for Typo, and click **Open Anyway**.
+   - Alternatively, install via Terminal: `sudo installer -pkg Typo_*_aarch64.pkg -target /`
+3. After installation, if prompted that Typo is damaged, run `xattr -cr /Applications/Typo.app`.
 
 ---
 

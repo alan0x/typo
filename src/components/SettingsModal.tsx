@@ -1,7 +1,23 @@
 import React, { useEffect, useState } from "react";
-import { AppSettings, AvailableModel, TARGET_LANGUAGES } from "../services/storage";
-import { Eye, EyeOff, X, ExternalLink, RefreshCw, AlertCircle, Check, FolderOpen } from "lucide-react";
+import {
+  AppSettings,
+  AvailableModel,
+  TARGET_LANGUAGES,
+  DEFAULT_MODELS,
+  DEFAULT_DEEPSEEK_MODELS,
+} from "../services/storage";
+import {
+  Eye,
+  EyeOff,
+  X,
+  ExternalLink,
+  RefreshCw,
+  AlertCircle,
+  Check,
+  FolderOpen,
+} from "lucide-react";
 import { fetchGeminiModels } from "../services/gemini";
+import { fetchDeepseekModels } from "../services/deepseek";
 import { getDefaultNotesDir, pickNotesDir } from "../services/notes";
 
 interface SettingsModalProps {
@@ -18,9 +34,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onSave,
 }) => {
   const [formData, setFormData] = useState<AppSettings>({ ...settings });
-  const [showKey, setShowKey] = useState(false);
+  const [showGeminiKey, setShowGeminiKey] = useState(false);
+  const [showDeepseekKey, setShowDeepseekKey] = useState(false);
   const [fetching, setFetching] = useState(false);
-  const [modelsList, setModelsList] = useState<AvailableModel[]>(settings.availableModels || []);
+
+  const [geminiModelsList, setGeminiModelsList] = useState<AvailableModel[]>(
+    settings.availableModels && settings.availableModels.length > 0
+      ? settings.availableModels
+      : DEFAULT_MODELS
+  );
+
+  const [deepseekModelsList, setDeepseekModelsList] = useState<AvailableModel[]>(
+    settings.availableDeepseekModels && settings.availableDeepseekModels.length > 0
+      ? settings.availableDeepseekModels
+      : DEFAULT_DEEPSEEK_MODELS
+  );
+
   const [statusMessage, setStatusMessage] = useState<{
     type: "success" | "error" | "info";
     text: string;
@@ -29,9 +58,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
+      setFormData({ ...settings });
+      setStatusMessage(null);
       getDefaultNotesDir().then(setDefaultNotesDir).catch(() => setDefaultNotesDir(""));
     }
-  }, [isOpen]);
+  }, [isOpen, settings]);
+
+  // Handle ESC key to close modal
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown, { capture: true });
+    return () => window.removeEventListener("keydown", handleKeyDown, { capture: true });
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -47,10 +91,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   const handleTestAndFetch = async () => {
-    if (!formData.apiKey.trim()) {
+    const isDeepSeek = formData.provider === "deepseek";
+    const currentKey = isDeepSeek ? formData.deepseekApiKey : formData.apiKey;
+
+    if (!currentKey.trim()) {
       setStatusMessage({
         type: "error",
-        text: "API key is required to connect to Gemini.",
+        text: `API key is required to connect to ${isDeepSeek ? "DeepSeek" : "Gemini"}.`,
       });
       return;
     }
@@ -58,31 +105,57 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setFetching(true);
     setStatusMessage({
       type: "info",
-      text: "Querying Google Generative AI registry...",
+      text: isDeepSeek
+        ? "Connecting to DeepSeek endpoint..."
+        : "Querying Google Generative AI registry...",
     });
 
     try {
-      const realModels = await fetchGeminiModels(formData.apiKey);
-      setModelsList(realModels);
+      if (isDeepSeek) {
+        const realModels = await fetchDeepseekModels(
+          formData.deepseekApiKey,
+          formData.deepseekBaseUrl
+        );
+        setDeepseekModelsList(realModels);
 
-      const hasCurrent = realModels.some((m) => m.id === formData.model);
-      const nextModel = hasCurrent ? formData.model : (realModels[0]?.id || "gemini-2.5-flash");
+        const hasCurrent = realModels.some((m) => m.id === formData.deepseekModel);
+        const nextModel = hasCurrent
+          ? formData.deepseekModel
+          : realModels[0]?.id || "deepseek-chat";
 
-      setFormData((prev) => ({
-        ...prev,
-        model: nextModel,
-        availableModels: realModels,
-      }));
+        setFormData((prev) => ({
+          ...prev,
+          deepseekModel: nextModel,
+          availableDeepseekModels: realModels,
+        }));
 
-      setStatusMessage({
-        type: "success",
-        text: `Connected. Found ${realModels.length} compatible generation models for your key.`,
-      });
+        setStatusMessage({
+          type: "success",
+          text: `Connected. Found ${realModels.length} models for your DeepSeek key.`,
+        });
+      } else {
+        const realModels = await fetchGeminiModels(formData.apiKey);
+        setGeminiModelsList(realModels);
+
+        const hasCurrent = realModels.some((m) => m.id === formData.model);
+        const nextModel = hasCurrent ? formData.model : realModels[0]?.id || "gemini-2.5-flash";
+
+        setFormData((prev) => ({
+          ...prev,
+          model: nextModel,
+          availableModels: realModels,
+        }));
+
+        setStatusMessage({
+          type: "success",
+          text: `Connected. Found ${realModels.length} generation models for your Gemini key.`,
+        });
+      }
     } catch (err: any) {
       console.error("Fetch models failed:", err);
       setStatusMessage({
         type: "error",
-        text: err.message || "Failed to reach Google Gemini API.",
+        text: err.message || `Failed to reach ${isDeepSeek ? "DeepSeek" : "Google Gemini"} API.`,
       });
     } finally {
       setFetching(false);
@@ -92,28 +165,35 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const handleSave = () => {
     onSave({
       ...formData,
-      availableModels: modelsList,
+      availableModels: geminiModelsList,
+      availableDeepseekModels: deepseekModelsList,
     });
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/30 backdrop-blur-2xs animate-fade-in">
-      <div className="w-full max-w-md bg-[#faf9f5] border border-stone-300 rounded-xl shadow-xl p-5 text-stone-900 font-sans">
-        {/* Header */}
-        <div className="flex items-center justify-between pb-3.5 mb-3.5 border-b border-stone-200">
-          <div className="flex items-center gap-3">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-stone-900/40 backdrop-blur-2xs animate-fade-in"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md max-h-[min(480px,94vh)] flex flex-col bg-[#faf9f5] border border-stone-300 rounded-xl shadow-2xl p-4 text-stone-900 font-sans"
+      >
+        {/* Header (shrink-0) */}
+        <div className="flex items-center justify-between pb-3 mb-2 border-b border-stone-200 shrink-0">
+          <div className="flex items-center gap-2.5">
             <img
               src="/logo-icon.png"
               alt="Typo"
-              className="w-9 h-9 rounded-lg shadow-2xs border border-stone-200/90 object-contain select-none pointer-events-none bg-white"
+              className="w-8 h-8 rounded-lg shadow-2xs border border-stone-200/90 object-contain select-none pointer-events-none bg-white"
             />
             <div>
               <div className="flex items-center gap-1.5 leading-none">
                 <h2 className="font-serif text-[13px] font-bold tracking-wider uppercase text-stone-900 leading-none">
                   Preferences
                 </h2>
-                <span className="font-mono text-[9px] text-stone-400 bg-stone-200/60 px-1 py-0.5 rounded leading-none">
+                <span className="font-mono text-[9px] text-stone-500 bg-stone-200/70 px-1 py-0.5 rounded leading-none">
                   BYOK
                 </span>
               </div>
@@ -125,63 +205,250 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <button
             onClick={onClose}
             className="p-1.5 text-stone-400 hover:text-stone-900 hover:bg-stone-200/50 rounded-md transition-colors cursor-pointer"
+            title="Close (Esc)"
           >
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* Form Body */}
-        <div className="py-2 space-y-4 text-xs">
-          {/* Key Input */}
+        {/* Scrollable Form Body */}
+        <div className="flex-1 overflow-y-auto min-h-0 py-1 space-y-3.5 text-xs pr-1">
+          {/* Provider Selection Tabs */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-[11px] font-medium text-stone-700 tracking-wide uppercase">
-                Google Gemini API Key
-              </label>
-              <a
-                href="https://aistudio.google.com/app/apikey"
-                target="_blank"
-                rel="noreferrer"
-                className="text-[10px] font-mono text-stone-500 hover:text-stone-900 transition-colors underline flex items-center gap-1"
-              >
-                <span>Generate key</span>
-                <ExternalLink className="w-2.5 h-2.5" />
-              </a>
-            </div>
-
-            <div className="relative flex items-center">
-              <input
-                type={showKey ? "text" : "password"}
-                placeholder="AIzaSy..."
-                value={formData.apiKey}
-                onChange={(e) => {
-                  setFormData({ ...formData, apiKey: e.target.value });
-                  setStatusMessage(null);
-                }}
-                className="w-full px-3 py-1.5 pr-8 bg-white border border-stone-300 rounded-md font-mono text-[11px] text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-800 transition-colors"
-              />
+            <label className="text-[11px] font-medium text-stone-700 tracking-wide uppercase">
+              AI Provider
+            </label>
+            <div className="grid grid-cols-2 p-0.5 bg-stone-200/70 rounded-lg gap-1">
               <button
                 type="button"
-                onClick={() => setShowKey(!showKey)}
-                className="absolute right-2.5 text-stone-400 hover:text-stone-700 cursor-pointer"
+                onClick={() => {
+                  setFormData({ ...formData, provider: "gemini" });
+                  setStatusMessage(null);
+                }}
+                className={`py-1.5 px-3 rounded-md text-center text-[11px] font-medium transition-all cursor-pointer ${
+                  formData.provider === "gemini"
+                    ? "bg-white text-stone-900 shadow-2xs font-semibold"
+                    : "text-stone-600 hover:text-stone-900"
+                }`}
               >
-                {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                Google Gemini
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData({ ...formData, provider: "deepseek" });
+                  setStatusMessage(null);
+                }}
+                className={`py-1.5 px-3 rounded-md text-center text-[11px] font-medium transition-all cursor-pointer ${
+                  formData.provider === "deepseek"
+                    ? "bg-white text-stone-900 shadow-2xs font-semibold"
+                    : "text-stone-600 hover:text-stone-900"
+                }`}
+              >
+                DeepSeek
               </button>
             </div>
-            <p className="text-[10px] text-stone-400">
-              Keys remain sandboxed locally on this machine.
-            </p>
           </div>
 
-          {/* Test & Fetch action */}
+          {/* Conditional Provider Section: Gemini */}
+          {formData.provider === "gemini" && (
+            <>
+              {/* Gemini Key Input */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-medium text-stone-700 tracking-wide uppercase">
+                    Google Gemini API Key
+                  </label>
+                  <a
+                    href="https://aistudio.google.com/app/apikey"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[10px] font-mono text-stone-500 hover:text-stone-900 transition-colors underline flex items-center gap-1"
+                  >
+                    <span>Get Key</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                </div>
+
+                <div className="relative flex items-center">
+                  <input
+                    type={showGeminiKey ? "text" : "password"}
+                    placeholder="AIzaSy..."
+                    value={formData.apiKey}
+                    onChange={(e) => {
+                      setFormData({ ...formData, apiKey: e.target.value });
+                      setStatusMessage(null);
+                    }}
+                    className="w-full px-3 py-1.5 pr-8 bg-white border border-stone-300 rounded-md font-mono text-[11px] text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-800 transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowGeminiKey(!showGeminiKey)}
+                    className="absolute right-2.5 text-stone-400 hover:text-stone-700 cursor-pointer"
+                  >
+                    {showGeminiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Gemini Model Dropdown */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-medium text-stone-700 tracking-wide uppercase">
+                    Gemini Model
+                  </label>
+                  <span className="font-mono text-[10px] text-stone-400">
+                    {geminiModelsList.length} options
+                  </span>
+                </div>
+
+                <select
+                  value={formData.model}
+                  onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                  className="w-full px-2.5 py-1.5 bg-white border border-stone-300 rounded-md text-stone-900 font-mono text-[11px] focus:outline-none focus:border-stone-800 transition-colors"
+                >
+                  {geminiModelsList.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.displayName} ({m.id})
+                    </option>
+                  ))}
+                </select>
+
+                {(() => {
+                  const info = geminiModelsList.find((m) => m.id === formData.model);
+                  return info?.description ? (
+                    <p className="text-[10px] text-stone-500 leading-normal font-sans">
+                      {info.description}
+                    </p>
+                  ) : null;
+                })()}
+              </div>
+            </>
+          )}
+
+          {/* Conditional Provider Section: DeepSeek */}
+          {formData.provider === "deepseek" && (
+            <>
+              {/* DeepSeek Key Input */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-medium text-stone-700 tracking-wide uppercase">
+                    DeepSeek API Key
+                  </label>
+                  <a
+                    href="https://platform.deepseek.com/api_keys"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[10px] font-mono text-stone-500 hover:text-stone-900 transition-colors underline flex items-center gap-1"
+                  >
+                    <span>Get Key</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                </div>
+
+                <div className="relative flex items-center">
+                  <input
+                    type={showDeepseekKey ? "text" : "password"}
+                    placeholder="sk-..."
+                    value={formData.deepseekApiKey}
+                    onChange={(e) => {
+                      setFormData({ ...formData, deepseekApiKey: e.target.value });
+                      setStatusMessage(null);
+                    }}
+                    className="w-full px-3 py-1.5 pr-8 bg-white border border-stone-300 rounded-md font-mono text-[11px] text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-800 transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowDeepseekKey(!showDeepseekKey)}
+                    className="absolute right-2.5 text-stone-400 hover:text-stone-700 cursor-pointer"
+                  >
+                    {showDeepseekKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* DeepSeek Base URL */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-medium text-stone-700 tracking-wide uppercase">
+                    API Base URL
+                  </label>
+                  {formData.deepseekBaseUrl !== "https://api.deepseek.com" && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFormData({ ...formData, deepseekBaseUrl: "https://api.deepseek.com" })
+                      }
+                      className="text-[10px] text-stone-500 hover:text-stone-900 underline transition-colors cursor-pointer"
+                    >
+                      Reset default
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  placeholder="https://api.deepseek.com"
+                  value={formData.deepseekBaseUrl}
+                  onChange={(e) => setFormData({ ...formData, deepseekBaseUrl: e.target.value })}
+                  className="w-full px-3 py-1.5 bg-white border border-stone-300 rounded-md font-mono text-[11px] text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-800 transition-colors"
+                />
+              </div>
+
+              {/* DeepSeek Model Dropdown */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-medium text-stone-700 tracking-wide uppercase">
+                    DeepSeek Model
+                  </label>
+                  <span className="font-mono text-[10px] text-stone-400">
+                    {deepseekModelsList.length} options
+                  </span>
+                </div>
+
+                <select
+                  value={formData.deepseekModel}
+                  onChange={(e) => setFormData({ ...formData, deepseekModel: e.target.value })}
+                  className="w-full px-2.5 py-1.5 bg-white border border-stone-300 rounded-md text-stone-900 font-mono text-[11px] focus:outline-none focus:border-stone-800 transition-colors"
+                >
+                  {deepseekModelsList.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.displayName} ({m.id})
+                    </option>
+                  ))}
+                </select>
+
+                {(() => {
+                  const info = deepseekModelsList.find((m) => m.id === formData.deepseekModel);
+                  return info?.description ? (
+                    <p className="text-[10px] text-stone-500 leading-normal font-sans">
+                      {info.description}
+                    </p>
+                  ) : null;
+                })()}
+              </div>
+            </>
+          )}
+
+          {/* Test Connection Button */}
           <div>
             <button
               onClick={handleTestAndFetch}
-              disabled={fetching || !formData.apiKey.trim()}
+              disabled={
+                fetching ||
+                !(formData.provider === "deepseek"
+                  ? formData.deepseekApiKey.trim()
+                  : formData.apiKey.trim())
+              }
               className="flex items-center justify-center gap-1.5 w-full py-1.5 px-3 bg-stone-100 hover:bg-stone-200 border border-stone-300 disabled:opacity-50 text-stone-800 font-sans font-medium rounded-md transition-colors text-[11px] cursor-pointer"
             >
-              <RefreshCw className={`w-3 h-3 ${fetching ? "animate-spin text-stone-500" : "text-stone-500"}`} />
-              <span>{fetching ? "Querying registry..." : "Test Connection & Query Available Models"}</span>
+              <RefreshCw
+                className={`w-3 h-3 ${fetching ? "animate-spin text-stone-500" : "text-stone-500"}`}
+              />
+              <span>
+                {fetching
+                  ? "Testing connection..."
+                  : `Test Connection & Query ${formData.provider === "deepseek" ? "DeepSeek" : "Gemini"} Models`}
+              </span>
             </button>
 
             {statusMessage && (
@@ -205,47 +472,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             )}
           </div>
 
-          {/* Dynamic Model Dropdown */}
-          <div className="space-y-1.5 pt-1">
-            <div className="flex items-center justify-between">
-              <label className="text-[11px] font-medium text-stone-700 tracking-wide uppercase">
-                Active Generation Model
-              </label>
-              <span className="font-mono text-[10px] text-stone-400">
-                {modelsList.length} options
-              </span>
-            </div>
-
-            <select
-              value={formData.model}
-              onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-              className="w-full px-2.5 py-1.5 bg-white border border-stone-300 rounded-md text-stone-900 font-mono text-[11px] focus:outline-none focus:border-stone-800 transition-colors"
-            >
-              {modelsList.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.displayName} ({m.id})
-                </option>
-              ))}
-            </select>
-
-            {(() => {
-              const currentModelInfo = modelsList.find((m) => m.id === formData.model);
-              return currentModelInfo?.description ? (
-                <p className="text-[10px] text-stone-500 leading-normal font-sans">
-                  {currentModelInfo.description}
-                </p>
-              ) : null;
-            })()}
-          </div>
-
           {/* Target Language */}
           <div className="space-y-1.5 pt-1">
-            <div className="flex items-center justify-between">
-              <label className="text-[11px] font-medium text-stone-700 tracking-wide uppercase">
-                Target Language
-              </label>
-            </div>
-
+            <label className="text-[11px] font-medium text-stone-700 tracking-wide uppercase">
+              Target Language
+            </label>
             <select
               value={formData.targetLanguage}
               onChange={(e) => setFormData({ ...formData, targetLanguage: e.target.value })}
@@ -257,18 +488,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </option>
               ))}
             </select>
-
             <p className="text-[10px] text-stone-500 leading-normal font-sans">
               Drafts in any language are refined into well-expressed {formData.targetLanguage}.
             </p>
           </div>
 
-          {/* Quick Replace */}
+          {/* Quick Replace Options */}
           <div className="space-y-1.5 pt-1">
             <label className="text-[11px] font-medium text-stone-700 tracking-wide uppercase">
               Quick Replace (no HUD)
             </label>
-
             <div className="flex items-center justify-between gap-2">
               <span className="font-mono text-[10px] text-stone-700 bg-stone-100 px-1.5 py-0.5 rounded border border-stone-200">
                 {formData.quickHotkey}
@@ -287,18 +516,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <option value="natural">Paste natural version</option>
               </select>
             </div>
-
             <p className="text-[10px] text-stone-400">
-              Polishes selected text (or the current input box) and replaces it in place, without opening the HUD.
+              Polishes selected text (or current input box) and replaces it in place without opening the HUD.
             </p>
           </div>
 
-          {/* Mistake Notebook Location */}
+          {/* Mistake Notebook Folder */}
           <div className="space-y-1.5 pt-1">
             <label className="text-[11px] font-medium text-stone-700 tracking-wide uppercase">
               Mistake Notebook Folder
             </label>
-
             <div className="flex items-center gap-1.5">
               <input
                 type="text"
@@ -316,7 +543,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <span>Choose…</span>
               </button>
             </div>
-
             <div className="flex items-center justify-between">
               <p className="text-[10px] text-stone-400">
                 Saved mistakes are appended to notebook.md in this folder.
@@ -326,32 +552,32 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   onClick={() => setFormData((prev) => ({ ...prev, notesDir: "" }))}
                   className="shrink-0 text-[10px] text-stone-500 hover:text-stone-900 underline transition-colors cursor-pointer"
                 >
-                  Reset to default
+                  Reset default
                 </button>
               )}
             </div>
           </div>
 
-          {/* Hotkey notice */}
+          {/* Hotkey Notice */}
           <div className="pt-2 border-t border-stone-200 flex items-center justify-between text-stone-500 text-[11px]">
-            <span>Global summon</span>
+            <span>Global summon HUD</span>
             <span className="font-mono text-[10px] text-stone-700 bg-stone-100 px-1.5 py-0.5 rounded border border-stone-200">
               {formData.hotkey}
             </span>
           </div>
         </div>
 
-        {/* Footer actions */}
-        <div className="flex items-center justify-end gap-2 pt-3 mt-1 border-t border-stone-200">
+        {/* Footer Actions (shrink-0, pinned to bottom) */}
+        <div className="flex items-center justify-end gap-2 pt-3 mt-1 border-t border-stone-200 shrink-0">
           <button
             onClick={onClose}
-            className="px-3 py-1 text-xs text-stone-500 hover:text-stone-800 transition-colors cursor-pointer"
+            className="px-3 py-1.5 text-xs text-stone-600 hover:text-stone-900 transition-colors cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="px-3 py-1 text-xs font-medium text-stone-50 bg-stone-900 hover:bg-stone-800 rounded-md transition-all cursor-pointer shadow-2xs"
+            className="px-3.5 py-1.5 text-xs font-medium text-stone-50 bg-stone-900 hover:bg-stone-800 rounded-md transition-all cursor-pointer shadow-2xs"
           >
             Apply Preferences
           </button>

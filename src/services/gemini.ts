@@ -31,7 +31,7 @@ export interface PolishResult {
   analysis: PolishAnalysisItem[];
 }
 
-function buildSystemInstruction(targetLanguage: string): string {
+export function buildSystemInstruction(targetLanguage: string): string {
   return `You are Typo, a careful proofreading and polishing companion for developers communicating with AI coding agents (like Claude Code, Cursor, Antigravity) and human peers.
 
 The user's draft may be written in ANY language (English, Chinese, a mix of languages, etc.). Your job is POLISHING (润色), NOT rewriting. If the draft is not already in ${targetLanguage}, translate it faithfully first and then polish it. If it is already in ${targetLanguage}, polish its grammar, spelling, and phrasing directly.

@@ -7,14 +7,13 @@ import {
   revealNotesFolder,
   writeNotebook,
 } from "../services/notes";
-import { organizeNotebookWithGemini } from "../services/gemini";
+import { organizeNotebook, isProviderConfigured, getProviderDisplayName } from "../services/ai";
+import { AppSettings } from "../services/storage";
 
 interface NotebookModalProps {
   isOpen: boolean;
   onClose: () => void;
-  notesDir: string;
-  apiKey: string;
-  model: string;
+  settings: AppSettings;
 }
 
 interface NotebookBlock {
@@ -48,9 +47,7 @@ function inlineHtml(text: string): string {
 export const NotebookModal: React.FC<NotebookModalProps> = ({
   isOpen,
   onClose,
-  notesDir,
-  apiKey,
-  model,
+  settings,
 }) => {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
@@ -63,8 +60,8 @@ export const NotebookModal: React.FC<NotebookModalProps> = ({
     setMessage(null);
     try {
       const [md, defaultDir] = await Promise.all([
-        readNotebook(notesDir || undefined),
-        notesDir ? Promise.resolve(notesDir) : getDefaultNotesDir(),
+        readNotebook(settings.notesDir || undefined),
+        settings.notesDir ? Promise.resolve(settings.notesDir) : getDefaultNotesDir(),
       ]);
       setContent(md);
       setEffectiveDir(defaultDir);
@@ -73,7 +70,7 @@ export const NotebookModal: React.FC<NotebookModalProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [notesDir]);
+  }, [settings.notesDir]);
 
   useEffect(() => {
     if (isOpen) {
@@ -81,19 +78,35 @@ export const NotebookModal: React.FC<NotebookModalProps> = ({
     }
   }, [isOpen, load]);
 
+  // Handle ESC key
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown, { capture: true });
+    return () => window.removeEventListener("keydown", handleKeyDown, { capture: true });
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleOrganize = async () => {
     if (!content.trim() || organizing) return;
-    if (!apiKey) {
-      setMessage({ type: "error", text: "Set your Gemini API key first to use AI organize." });
+    if (!isProviderConfigured(settings)) {
+      setMessage({
+        type: "error",
+        text: `Set your ${getProviderDisplayName(settings.provider)} API key first to use AI organize.`,
+      });
       return;
     }
     setOrganizing(true);
     setMessage(null);
     try {
-      const organized = await organizeNotebookWithGemini(content, apiKey, model);
-      await writeNotebook(organized, notesDir || undefined);
+      const organized = await organizeNotebook(content, settings);
+      await writeNotebook(organized, settings.notesDir || undefined);
       setContent(organized);
       setMessage({ type: "info", text: "Organized. Previous version kept as notebook.raw.md." });
     } catch (err: any) {
@@ -118,7 +131,7 @@ export const NotebookModal: React.FC<NotebookModalProps> = ({
     const next = lines.join("\n");
     setContent(next);
     try {
-      await writeNotebook(next, notesDir || undefined);
+      await writeNotebook(next, settings.notesDir || undefined);
     } catch (err: any) {
       setMessage({ type: "error", text: err.message || "Failed to delete entry." });
       load();
@@ -158,15 +171,30 @@ export const NotebookModal: React.FC<NotebookModalProps> = ({
     for (const b of blocks) {
       if (b.kind === "entry") {
         listBuffer.push(b);
-        continue;
-      }
-      flushList();
-      if (b.kind === "h1") {
-        nodes.push(<h1 key={b.lineIndex} dangerouslySetInnerHTML={{ __html: inlineHtml(b.text) }} />);
-      } else if (b.kind === "h2") {
-        nodes.push(<h2 key={b.lineIndex} dangerouslySetInnerHTML={{ __html: inlineHtml(b.text) }} />);
       } else {
-        nodes.push(<p key={b.lineIndex} dangerouslySetInnerHTML={{ __html: inlineHtml(b.text) }} />);
+        flushList();
+        if (b.kind === "h1") {
+          nodes.push(
+            <h1 key={`h1-${b.lineIndex}`} className="font-serif text-[15px] font-bold text-stone-900 mt-1 mb-2">
+              {b.text}
+            </h1>
+          );
+        } else if (b.kind === "h2") {
+          nodes.push(
+            <h2
+              key={`h2-${b.lineIndex}`}
+              className="font-mono text-[11px] font-bold uppercase tracking-wider text-stone-600 mt-4 mb-2 pb-1 border-b border-stone-200"
+            >
+              {b.text}
+            </h2>
+          );
+        } else {
+          nodes.push(
+            <p key={`p-${b.lineIndex}`} className="text-xs text-stone-500 my-1 leading-relaxed">
+              {b.text}
+            </p>
+          );
+        }
       }
     }
     flushList();
@@ -176,8 +204,14 @@ export const NotebookModal: React.FC<NotebookModalProps> = ({
   const hasContent = content.trim().length > 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/30 backdrop-blur-2xs animate-fade-in">
-      <div className="w-full max-w-lg max-h-[85vh] flex flex-col bg-[#faf9f5] border border-stone-300 rounded-xl shadow-xl text-stone-900 font-sans">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/30 backdrop-blur-2xs animate-fade-in"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-lg max-h-[85vh] flex flex-col bg-[#faf9f5] border border-stone-300 rounded-xl shadow-xl text-stone-900 font-sans"
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-200 shrink-0">
           <div className="flex items-center gap-2">
@@ -224,13 +258,13 @@ export const NotebookModal: React.FC<NotebookModalProps> = ({
           </div>
         </div>
 
-        {/* Status message */}
+        {/* Message banner */}
         {message && (
           <div
-            className={`mx-5 mt-3 px-3 py-2 rounded border text-[11px] shrink-0 ${
+            className={`px-5 py-2 text-[11px] border-b ${
               message.type === "error"
-                ? "bg-stone-50 text-rose-800 border-rose-200"
-                : "bg-stone-50 text-stone-700 border-stone-300"
+                ? "bg-rose-50 text-rose-800 border-rose-200"
+                : "bg-stone-100 text-stone-700 border-stone-200"
             }`}
           >
             {message.text}
@@ -238,29 +272,32 @@ export const NotebookModal: React.FC<NotebookModalProps> = ({
         )}
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+        <div className="flex-1 overflow-y-auto px-5 py-4 min-h-0">
           {loading ? (
-            <div className="space-y-2.5 animate-pulse">
-              <div className="h-3 bg-stone-100 rounded w-1/3" />
-              <div className="h-10 bg-stone-50 rounded" />
-              <div className="h-14 bg-stone-50 rounded" />
+            <div className="flex items-center justify-center py-12 text-stone-400 text-xs gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Loading notebook…</span>
             </div>
-          ) : hasContent ? (
-            <div className="notebook-md text-[12px] leading-relaxed text-stone-800 select-text">
-              {renderBlocks()}
+          ) : !hasContent ? (
+            <div className="text-center py-12 text-stone-400 text-xs space-y-1">
+              <p>Your mistake notebook is empty.</p>
+              <p className="text-[11px] text-stone-400">
+                Click “Save to Notebook” on any proofreading note to collect it here.
+              </p>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center text-center py-10 select-none">
-              <BookOpen className="w-8 h-8 text-stone-300 mb-3" />
-              <p className="font-serif italic text-stone-700 text-[13px]">
-                Your notebook is still empty.
-              </p>
-              <p className="text-[11px] text-stone-500 mt-2 max-w-xs leading-normal">
-                After refining a draft, click the <span className="font-mono">+</span> icon on any
-                Proofreading Note — or "Save all" — to collect it here.
-              </p>
+            <div className="notebook-content text-xs leading-relaxed space-y-1">
+              {renderBlocks()}
             </div>
           )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-2.5 border-t border-stone-200 bg-stone-50/60 flex items-center justify-between text-[10px] text-stone-400 shrink-0 font-mono">
+          <span className="truncate" title={effectiveDir}>
+            {effectiveDir}
+          </span>
+          <span className="shrink-0 text-stone-400">notebook.md</span>
         </div>
       </div>
     </div>

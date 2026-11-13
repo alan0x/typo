@@ -135,7 +135,7 @@ fn show_hud_window(app: &tauri::AppHandle, text: Option<&str>) {
                 let mon_size = monitor.size();
                 let mon_pos = monitor.position();
                 let win_width = 650;
-                let win_height = 500;
+                let win_height = 520;
 
                 let max_x = mon_pos.x + (mon_size.width as i32) - win_width - 10;
                 let max_y = mon_pos.y + (mon_size.height as i32) - win_height - 10;

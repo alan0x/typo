@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Loader2, Check, X } from "lucide-react";
 import { loadSettings } from "../services/storage";
-import { polishTextWithGemini } from "../services/gemini";
+import { polishText, isProviderConfigured, getProviderDisplayName } from "../services/ai";
 
 type Status = "idle" | "polishing" | "ok" | "error" | "empty";
 
@@ -40,15 +40,10 @@ export const ToastView: React.FC = () => {
 
         const settings = loadSettings();
         try {
-          if (!settings.apiKey) {
-            throw new Error("Gemini API key not set");
+          if (!isProviderConfigured(settings)) {
+            throw new Error(`${getProviderDisplayName(settings.provider)} API key not set`);
           }
-          const result = await polishTextWithGemini(
-            text,
-            settings.apiKey,
-            settings.model,
-            settings.targetLanguage
-          );
+          const result = await polishText(text, settings);
           const output =
             settings.quickOutput === "natural"
               ? result.naturalVersion || result.bestForAgent
@@ -80,51 +75,87 @@ export const ToastView: React.FC = () => {
     );
 
     unlisteners.push(
-      listen("quick-empty", () => {
+      listen("quick-empty", async () => {
         setStatus("empty");
         setTimeout(async () => {
           await dismissToast();
           setStatus("idle");
-        }, 1500);
+        }, 900);
       })
     );
 
     return () => {
-      unlisteners.forEach((p) => p.then((u) => u()));
+      unlisteners.forEach((p) => p.then((unlisten) => unlisten()));
     };
   }, [busy]);
 
   return (
-    <div className="flex items-center justify-center h-screen w-screen bg-transparent font-sans">
-      <div className="flex items-center gap-2.5 px-3.5 py-2.5 bg-[#faf9f5] border border-stone-300 rounded-xl shadow-2xl text-stone-900 max-w-[220px]">
+    <div className="w-full h-full p-2 flex items-center justify-center select-none bg-transparent">
+      <div className="w-full h-full bg-[#faf9f5]/95 border border-stone-300 rounded-lg shadow-lg px-3 py-2 flex items-center gap-2.5 backdrop-blur-md">
         {status === "polishing" && (
           <>
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-stone-500 shrink-0" />
-            <div className="min-w-0">
-              <p className="text-[11px] font-medium leading-none">Polishing…</p>
-              {preview && (
-                <p className="text-[9px] text-stone-400 mt-1 truncate leading-none">{preview}</p>
-              )}
+            <Loader2 className="w-4 h-4 text-stone-700 animate-spin shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="text-[11px] font-medium text-stone-800 leading-tight">
+                Polishing…
+              </div>
+              <div className="text-[10px] text-stone-500 font-mono truncate leading-tight mt-0.5">
+                {preview}
+              </div>
             </div>
           </>
         )}
+
         {status === "ok" && (
           <>
-            <Check className="w-3.5 h-3.5 text-stone-800 shrink-0" />
-            <p className="text-[11px] font-medium leading-none">Replaced</p>
+            <div className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
+              <Check className="w-3 h-3 stroke-[3]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[11px] font-medium text-stone-900 leading-tight">
+                Replaced
+              </div>
+              <div className="text-[10px] text-stone-500 font-sans leading-tight mt-0.5">
+                Polished text pasted in place
+              </div>
+            </div>
           </>
         )}
+
         {status === "error" && (
           <>
-            <X className="w-3.5 h-3.5 text-rose-700 shrink-0" />
-            <p className="text-[11px] text-rose-800 leading-tight truncate">{errorMsg}</p>
+            <div className="w-4 h-4 rounded-full bg-rose-600 text-white flex items-center justify-center shrink-0">
+              <X className="w-3 h-3 stroke-[3]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[11px] font-medium text-rose-800 leading-tight">
+                Failed
+              </div>
+              <div className="text-[10px] text-stone-500 font-mono truncate leading-tight mt-0.5">
+                {errorMsg}
+              </div>
+            </div>
           </>
         )}
+
         {status === "empty" && (
-          <p className="text-[11px] text-stone-600 leading-tight">No text found to polish</p>
+          <>
+            <div className="w-4 h-4 rounded-full bg-stone-400 text-white flex items-center justify-center shrink-0">
+              <X className="w-3 h-3 stroke-[3]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[11px] font-medium text-stone-700 leading-tight">
+                No draft found
+              </div>
+              <div className="text-[10px] text-stone-500 leading-tight mt-0.5">
+                Select text or focus an input
+              </div>
+            </div>
+          </>
         )}
+
         {status === "idle" && (
-          <p className="text-[11px] text-stone-400 leading-none">Typo</p>
+          <div className="text-[11px] text-stone-400 font-mono">Typo</div>
         )}
       </div>
     </div>

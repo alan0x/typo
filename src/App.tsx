@@ -5,7 +5,7 @@ import { ResultCard } from "./components/ResultCard";
 import { NotebookModal } from "./components/NotebookModal";
 import { ToastView } from "./components/ToastView";
 import { loadSettings, saveSettings, AppSettings } from "./services/storage";
-import { polishTextWithGemini, PolishAnalysisItem, PolishResult } from "./services/gemini";
+import { polishText, isProviderConfigured, PolishAnalysisItem, PolishResult } from "./services/ai";
 import { appendEntries } from "./services/notes";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
@@ -24,7 +24,7 @@ export function App() {
 
   const [settings, setSettings] = useState<AppSettings>(() => {
     const loaded = loadSettings();
-    if (isDemo && !loaded.apiKey) {
+    if (isDemo && !isProviderConfigured(loaded)) {
       return { ...loaded, apiKey: "AIzaSy_demo_key_example" };
     }
     return loaded;
@@ -84,7 +84,7 @@ export function App() {
       const grabbed = event.payload;
       if (grabbed && grabbed.trim()) {
         setInputText(grabbed.trim());
-        if (settings.apiKey) {
+        if (isProviderConfigured(settings)) {
           handlePolish(grabbed.trim());
         }
       } else {
@@ -95,13 +95,24 @@ export function App() {
     return () => {
       unlistenPromise.then((unlisten) => unlisten());
     };
-  }, [settings.apiKey, settings.model, settings.targetLanguage]);
+  }, [settings]);
 
   // Window-level key controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
+        // Priority 1: close settings modal if open
+        if (isSettingsOpen) {
+          setIsSettingsOpen(false);
+          return;
+        }
+        // Priority 2: close notebook modal if open
+        if (isNotebookOpen) {
+          setIsNotebookOpen(false);
+          return;
+        }
+        // Priority 3: hide main HUD window
         invoke("hide_window").catch(console.error);
       } else if (
         e.key === "Enter" &&
@@ -131,13 +142,13 @@ export function App() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [result, inputText, settings.apiKey, settings.model, settings.targetLanguage]);
+  }, [result, inputText, settings, isSettingsOpen, isNotebookOpen]);
 
   const handlePolish = async (textToPolish?: string) => {
     const target = textToPolish !== undefined ? textToPolish : inputText;
     if (!target.trim()) return;
 
-    if (!settings.apiKey) {
+    if (!isProviderConfigured(settings)) {
       setIsSettingsOpen(true);
       return;
     }
@@ -146,7 +157,7 @@ export function App() {
     setError(null);
 
     try {
-      const data = await polishTextWithGemini(target, settings.apiKey, settings.model, settings.targetLanguage);
+      const data = await polishText(target, settings);
       setResult(data);
     } catch (err: any) {
       console.error("Polishing error:", err);
@@ -158,9 +169,6 @@ export function App() {
 
   const handleReplace = async (text: string, clearFirst = false) => {
     try {
-      // On macOS the backend always sends Ctrl+C first (harmless in GUI
-      // text fields) so terminal drafts are cleared before pasting;
-      // clearFirst only matters on Windows.
       await invoke("replace_selection", { text, clearFirst });
     } catch (err) {
       console.error("Replace failed:", err);
@@ -196,107 +204,69 @@ export function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#f7f6f2] border border-stone-300 rounded-xl shadow-2xl text-stone-900 overflow-hidden font-sans">
+    <div className="flex flex-col h-screen w-screen bg-[#f7f6f2] text-stone-900 border border-stone-300 shadow-2xl rounded-xl overflow-hidden select-none font-sans">
       <Header
         hotkey={settings.hotkey}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenNotebook={() => setIsNotebookOpen(true)}
       />
 
-      <main className="flex-1 flex flex-col p-4 space-y-3.5 overflow-y-auto">
-        {/* Unconfigured Key Gentle Notice */}
-        {!settings.apiKey && (
-          <div className="flex items-center justify-between px-3.5 py-2.5 bg-white border border-stone-300/80 rounded-lg text-xs">
-            <span className="text-stone-600 font-sans">
-              Gemini API key is not yet configured.
-            </span>
-            <button
-              onClick={() => setIsSettingsOpen(true)}
-              className="text-stone-900 font-medium underline hover:text-stone-700 transition-colors cursor-pointer text-xs"
-            >
-              Set key →
-            </button>
-          </div>
-        )}
-
-        {/* Draft Area */}
-        <div className="bg-white border border-stone-300/80 rounded-lg p-3.5 focus-within:border-stone-800 transition-colors shadow-2xs">
-          <div className="flex items-center justify-between text-[10px] mb-2">
-            <span className="meta-caption text-stone-700 tracking-wider">
-              Input Draft
-            </span>
-            {inputText && (
-              <button
-                onClick={() => {
-                  setInputText("");
-                  setResult(null);
-                  setError(null);
-                }}
-                className="text-stone-600 hover:text-stone-900 transition-colors cursor-pointer font-mono"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-
+      <main className="flex-1 flex flex-col p-3.5 space-y-3 overflow-y-auto">
+        {/* Editor Box */}
+        <div className="bg-[#faf9f5] border border-stone-300 rounded-lg p-2.5 shadow-2xs relative flex flex-col focus-within:border-stone-500 focus-within:ring-1 focus-within:ring-stone-400 transition-all">
           <textarea
             ref={inputRef}
-            rows={2}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder={`Type your draft in any language, or press ${settings.hotkey} on selected text in any app...`}
-            className="w-full bg-transparent resize-none outline-none text-[12px] text-stone-900 placeholder-stone-400 font-sans leading-relaxed selectable-text"
+            placeholder="Draft in any language, e.g. 'I follow this artical to set you run in advisor mode'..."
+            className="w-full bg-transparent resize-none border-none outline-none text-stone-800 placeholder-stone-400 text-xs font-mono min-h-[58px] leading-relaxed"
+            rows={2}
           />
-
-          <div className="flex items-center justify-between pt-2 mt-1 border-t border-stone-100">
-            <span className="font-mono text-[10px] text-stone-600">
-              {settings.model}
-            </span>
-
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-stone-600 font-mono hidden sm:inline">
+          <div className="flex items-center justify-between pt-1 border-t border-stone-200/60 mt-1">
+            <span className="text-[10px] text-stone-400 font-mono">
+              Press{" "}
+              <kbd className="font-sans px-1 py-0.5 bg-stone-200/80 rounded border border-stone-300/80 text-[9px] text-stone-600">
                 {REFINE_HOTKEY_LABEL}
-              </span>
-              <button
-                onClick={() => handlePolish()}
-                disabled={loading || !inputText.trim()}
-                className="px-3 py-1 bg-stone-900 hover:bg-stone-800 active:scale-[0.98] disabled:opacity-40 text-stone-50 text-[11px] font-sans font-medium rounded-md transition-all cursor-pointer shadow-2xs"
-              >
-                {loading ? (
-                  <span className="flex items-center gap-1.5">
-                    <Loader2 className="w-3 h-3 animate-spin text-stone-300" />
-                    <span>Analyzing</span>
-                  </span>
-                ) : (
-                  <span>Refine prompt</span>
-                )}
-              </button>
-            </div>
+              </kbd>{" "}
+              to polish
+            </span>
+            <button
+              onClick={() => handlePolish(inputText)}
+              disabled={loading || !inputText.trim()}
+              className="flex items-center gap-1 px-2.5 py-1 bg-stone-900 hover:bg-stone-800 disabled:opacity-40 text-stone-50 text-[11px] font-sans font-medium rounded transition-colors cursor-pointer shadow-2xs"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <span>Synthesizing...</span>
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Refine</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
 
-        {/* Error message */}
+        {/* Error Alert */}
         {error && (
-          <div className="flex items-start gap-2.5 p-3 bg-white border border-rose-300/80 rounded-lg text-xs text-rose-900">
-            <div className="flex-1">
-              <p className="font-medium text-[11px]">Analysis failed</p>
-              <p className="text-[11px] text-rose-700 mt-0.5">{error}</p>
-            </div>
+          <div className="p-2.5 bg-stone-100 border border-stone-300 text-stone-800 rounded-lg text-xs flex items-center justify-between">
+            <span className="font-mono text-[11px] truncate">{error}</span>
             <button
-              onClick={() => handlePolish()}
-              className="p-1 hover:bg-rose-50 rounded text-rose-700 transition-colors cursor-pointer"
-              title="Retry"
+              onClick={() => handlePolish(inputText)}
+              className="text-stone-900 font-bold underline ml-2 text-[11px] hover:text-stone-700 shrink-0 cursor-pointer"
             >
-              <RefreshCw className="w-3 h-3" />
+              Retry
             </button>
           </div>
         )}
 
-        {/* Loading skeleton */}
+        {/* Loading Skeleton */}
         {loading && (
-          <div className="p-4 bg-white border border-stone-200/80 rounded-lg space-y-2.5 animate-pulse">
-            <div className="h-3 bg-stone-100 rounded w-1/4" />
-            <div className="h-10 bg-stone-50 rounded" />
+          <div className="space-y-2 animate-pulse">
+            <div className="h-20 bg-stone-100 rounded-lg" />
             <div className="h-14 bg-stone-50 rounded" />
           </div>
         )}
@@ -345,9 +315,7 @@ export function App() {
       <NotebookModal
         isOpen={isNotebookOpen}
         onClose={() => setIsNotebookOpen(false)}
-        notesDir={settings.notesDir}
-        apiKey={settings.apiKey}
-        model={settings.model}
+        settings={settings}
       />
     </div>
   );
